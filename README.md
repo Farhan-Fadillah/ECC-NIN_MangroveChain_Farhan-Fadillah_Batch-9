@@ -331,6 +331,108 @@ Hasil ini menunjukkan bahwa:
 - Pelengkapan Data: Tambahkan data anggota komunitas yang lebih lengkap
 - Metrik Alternatif: Pertimbangkan metrik partisipasi absolut jika data relatif tidak akurat
 
+### Topic 4 : Korelasi temporal antara kegiatan dan peningkatan biodiversitas
+
+    WITH activity_stats AS (
+      SELECT
+        ce.Conservation_ID,
+        mc.Location,
+        mc.Carbon_Credits,
+        COUNT(ce.Engage_ID) AS Activity_Count,
+        AVG(ce.Participants) AS Avg_Participants,
+        SUM(ce.Benefit_Distributed) AS Total_Benefit,
+        AVG(mc.Date_Recorded - ce.Engagement_Date) AS Avg_Days_Between_Activity_And_Record
+      FROM
+        community_engagement ce
+      JOIN
+        mangrove_conservation_records mc ON ce.Conservation_ID = mc.Conservation_ID
+      GROUP BY
+        ce.Conservation_ID, mc.Location, mc.Carbon_Credits
+    )
+    SELECT
+      Conservation_ID,
+      Location,
+      Carbon_Credits,
+      Activity_Count,
+      Avg_Participants,
+      Total_Benefit,
+      Avg_Days_Between_Activity_And_Record,
+      CORR(Activity_Count, Carbon_Credits) OVER () AS Correlation_Activity_Carbon
+    FROM
+      activity_stats
+    ORDER BY
+      Carbon_Credits DESC;
+
+  Output File:
+  <img width="1073" height="85" alt="image" src="https://github.com/user-attachments/assets/cd494f73-b427-4b02-ac91-9b04971f0e67" />
+
+#### Tujuan Utama
+Query ini digunakan untuk:
+- Menganalisis statistik kegiatan komunitas dalam proyek konservasi.
+- Mengukur hubungan (korelasi) antara jumlah kegiatan dan jumlah kredit karbon yang dihasilkan.
+- Memberikan gambaran menyeluruh per proyek: intensitas kegiatan, partisipasi, manfaat, efisiensi pencatatan, dan hasil akhir berupa kredit karbon.
+
+#### Struktur dan Penjelasan Komponen
+#### 1. CTE (WITH activity_stats AS (...))
+Digunakan untuk menyusun data statistik per proyek terlebih dahulu sebelum dianalisis lebih lanjut.
+
+Kolom dalam CTE:
+- ce.Conservation_ID: ID proyek konservasi.
+- mc.Location: Lokasi proyek.
+- mc.Carbon_Credits: Total kredit karbon yang dihasilkan oleh proyek.
+- COUNT(ce.Engage_ID) → Activity_Count: Jumlah kegiatan komunitas dalam proyek tersebut.
+- AVG(ce.Participants) → Avg_Participants: Rata-rata peserta per kegiatan.
+- SUM(ce.Benefit_Distributed) → Total_Benefit: Total manfaat ekonomi (dalam IDR atau satuan lain) yang didistribusikan ke masyarakat.
+- AVG(mc.Date_Recorded - ce.Engagement_Date) → Avg_Days_Between_Activity_And_Record: - Rata-rata selisih hari antara tanggal kegiatan dan tanggal pencatatan di sistem.
+
+#### 2. Main SELECT
+Mengambil semua kolom dari activity_stats dan menambahkan analisis korelasi:
+- CORR(...) OVER (): Fungsi agregat window untuk menghitung korelasi Pearson antara dua variabel:
+- Activity_Count: Banyaknya kegiatan
+- Carbon_Credits: Kredit karbon yang dihasilkan
+
+Korelasi ini bersifat global (dihitung sekali untuk semua baris) dan ditampilkan di setiap baris.
+
+#### 3. ORDER BY
+Mengurutkan hasil dari proyek yang menghasilkan kredit karbon tertinggi ke yang terendah.
+Mempermudah identifikasi proyek paling berdampak dari sisi lingkungan.
+
+#### Manfaat Analisis Ini
+Evaluasi Efektivitas Proyek:
+- Apakah lebih banyak kegiatan komunitas berkontribusi pada lebih banyak kredit karbon?
+- Monitoring Pelaksanaan Proyek:
+- Cek apakah pencatatan dilakukan tepat waktu (Avg_Days_Between...).
+
+#### Penilaian Dampak Sosial:
+- Total manfaat ekonomi (Total_Benefit) bisa jadi indikator pemberdayaan masyarakat.
+
+#### Makna Korelasi
+Nilai korelasi (Correlation_Activity_Carbon) berkisar antara:
++1 → Hubungan sangat positif (semakin banyak kegiatan, semakin banyak kredit karbon).
+0 → Tidak ada hubungan linier.
+-1 → Hubungan sangat negatif (semakin banyak kegiatan, semakin sedikit kredit karbon).
+
+Jika hasilnya misalnya 0.42, maka:
+
+Ada korelasi positif sedang antara jumlah kegiatan dan kredit karbon. Artinya, kegiatan masyarakat kemungkinan berkontribusi terhadap peningkatan karbon terserap, meskipun tidak sepenuhnya linear.
+
+#### Analisis Hasil:
+Dari hasil query terlihat bahwa:
+- Korelasi Positif: Ada korelasi moderat (0.42) antara jumlah kegiatan dan kredit karbon
+- Waktu Respons: Rata-rata pencatatan kredit karbon dilakukan 0-7 hari setelah kegiatan
+- Konsistensi: Semua proyek hanya memiliki 1 kegiatan yang tercatat
+- Pola Temporal: Tidak ada pola jelas antara waktu kegiatan dan kredit karbon
+
+#### Interpretasi:
+Hasil ini menunjukkan bahwa:
+- Kegiatan masyarakat mungkin berkontribusi pada peningkatan kredit karbon
+- Efek kegiatan terlihat dalam waktu singkat (kurang dari seminggu)
+- Data yang terbatas (hanya 1 kegiatan per proyek) membuat analisis temporal kurang akurat
+
+#### Rekomendasi:
+- Pelacakan Lebih Lama: Lakukan pencatatan kegiatan dan kredit karbon dalam periode lebih panjang
+- Analisis Lanjutan: Gunakan model statistik lebih canggih dengan data lebih banyak
+- Studi Lapangan: Verifikasi hubungan kausal antara kegiatan masyarakat dan biodiversitas
 
 ## Prediksi Kredit Karbon Berbasis Time Series dengan ARIMA
 
@@ -511,7 +613,7 @@ Grafik ini menunjukkan tren Kredit Karbon dan Partisipasi Masyarakat selama peri
 - Puncak tertinggi terjadi sekitar Juni 2024 (nilai mendekati 400).
 - Penurunan drastis tampak setelah bulan-bulan dengan nilai tinggi, misalnya dari Juni ke Juli 2024, dan dari Februari ke Maret 2025.
 
-Tren Umum: Tidak ada tren naik atau turun yang konsisten — nilai naik dan turun secara acak, menandakan bahwa produksi atau pencapaian kredit karbon sangat bergantung pada faktor tertentu yang mungkin tidak stabil.
+Tren Umum: Tidak ada tren naik atau turun yang konsisten nilai naik dan turun secara acak, menandakan bahwa produksi atau pencapaian kredit karbon sangat bergantung pada faktor tertentu yang mungkin tidak stabil.
 
 #### Total Peserta (Garis Oranye)
 - Stabil Rendah: Jumlah peserta relatif stabil di kisaran 8–15 orang setiap bulannya.
@@ -533,12 +635,12 @@ Perlu Evaluasi Program:
 #### Komponen Grafik
 - Garis Biru (Data Historis): Menunjukkan nilai aktual kredit karbon dari waktu ke waktu.
 - Garis Merah (Prediksi): Prediksi nilai kredit karbon untuk beberapa periode ke depan menggunakan model ARIMA.
-- Bayangan Merah Muda: Interval kepercayaan (confidence interval) prediksi — memberikan rentang kemungkinan nilai kredit karbon di masa depan.
+- Bayangan Merah Muda: Interval kepercayaan (confidence interval) prediksi memberikan rentang kemungkinan nilai kredit karbon di masa depan.
 
 #### Analisis Hasil
 Prediksi Stabil di Sekitar 250–280:
 - Model memprediksi nilai kredit karbon akan berfluktuasi sedikit, tetapi berada di sekitar nilai rata-rata historis.
-- Tidak ada tren meningkat atau menurun yang jelas — model ARIMA memproyeksikan masa depan akan mirip dengan nilai rata-rata masa lalu.
+- Tidak ada tren meningkat atau menurun yang jelas model ARIMA memproyeksikan masa depan akan mirip dengan nilai rata-rata masa lalu.
 
 #### Parameter Model (ditampilkan di bawah grafik):
 - ar.L1 = -0.554273 → koefisien autoregresif negatif, mengindikasikan bahwa nilai sebelumnya berpengaruh, tetapi dengan arah berlawanan.
