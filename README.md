@@ -173,6 +173,85 @@ Hasil ini menunjukkan bahwa:
 - Pelacakan Lebih Detail: Rekam frekuensi kegiatan yang lebih akurat
 - Analisis Longitudinal: Lakukan studi lanjutan untuk melihat perkembangan frekuensi kegiatan dari waktu ke waktu
 
+### Topic 2 : Distribusi manfaat ekonomi kepada masyarakat lokal
+
+    SELECT
+      ce.Conservation_ID,
+      mc.Location,
+      SUM(ce.Benefit_Distributed) AS Total_Benefit,
+      AVG(ce.Benefit_Distributed) AS Avg_Benefit_Per_Activity,
+      SUM(ce.Participants) AS Total_Participants,
+      SUM(ce.Benefit_Distributed) / NULLIF(SUM(ce.Participants), 0) AS Benefit_Per_Participant
+    FROM
+      community_engagement ce
+    JOIN
+      mangrove_conservation_records mc ON ce.Conservation_ID = mc.Conservation_ID
+    GROUP BY
+      ce.Conservation_ID, mc.Location
+    ORDER BY
+      Benefit_Per_Participant DESC;
+
+Output file:
+<img width="764" height="82" alt="image" src="https://github.com/user-attachments/assets/ee8abb89-d3a2-45d2-a1c4-d0a6e8d4b6b7" />
+
+#### Tujuan Utama
+Query ini dirancang untuk mengukur efektivitas distribusi manfaat dari kegiatan komunitas dalam proyek konservasi mangrove. Fokus utamanya adalah menghitung berapa besar manfaat ekonomi yang diterima rata-rata oleh setiap peserta di setiap proyek.
+
+#### Struktur dan Penjelasan Komponen
+#### 1. SELECT
+Penjelasan masing-masing kolom hasil:
+- ce.Conservation_ID: ID proyek konservasi.
+- mc.Location: Lokasi dari proyek konservasi (dari tabel mangrove_conservation_records).
+- SUM(ce.Benefit_Distributed) → Total_Benefit: Total manfaat ekonomi (misal dalam rupiah) yang didistribusikan untuk satu proyek.
+- AVG(ce.Benefit_Distributed) → Avg_Benefit_Per_Activity: Rata-rata manfaat ekonomi per aktivitas dalam proyek.
+- SUM(ce.Participants) → Total_Participants: Jumlah total peserta dalam seluruh aktivitas proyek.
+- SUM(ce.Benefit_Distributed) / NULLIF(SUM(ce.Participants), 0) → Benefit_Per_Participant: Rata-rata manfaat yang diterima per peserta. NULLIF() digunakan untuk mencegah pembagian dengan nol (jika tidak ada peserta sama sekali).
+
+#### 2. FROM & JOIN
+Menggabungkan dua tabel:
+- community_engagement (ce): Data keterlibatan masyarakat.
+- mangrove_conservation_records (mc): Informasi proyek konservasi.
+- Disatukan berdasarkan Conservation_ID untuk menggabungkan informasi lokasi proyek dengan aktivitas yang dilakukan.
+
+#### 3. GROUP BY
+Hasilnya: setiap baris mewakili satu proyek konservasi di satu lokasi tertentu.
+
+#### 4. ORDER BY
+Mengurutkan hasil berdasarkan manfaat rata-rata per peserta dari tertinggi ke terendah.
+Ini membantu mengidentifikasi proyek mana yang paling efisien dalam memberikan manfaat kepada masyarakat yang terlibat.
+
+Contoh Output yang Diharapkan
+Conservation_ID	Location	Total_Benefit	Avg_Benefit_Per_Activity	Total_Participants	Benefit_Per_Participant
+C002	Serang	9,000,000	3,000,000	45	200,000
+C001	Pontianak	5,000,000	2,500,000	25	200,000
+C003	Jember	7,500,000	2,500,000	60	125,000
+
+#### Manfaat Analisis Ini
+- Memberi gambaran nilai ekonomi langsung yang diterima masyarakat per proyek.
+- Memungkinkan evaluasi efisiensi sosial tiap proyek (apakah banyak peserta namun manfaatnya kecil, atau sedikit peserta tapi manfaatnya besar).
+- Berguna untuk pengambilan keputusan berbasis data, misalnya:
+- Proyek mana yang perlu efisiensi distribusi manfaat?
+- Di mana distribusi terlalu tersebar/tidak merata?
+- Bagaimana standar minimal benefit per peserta bisa diterapkan?
+
+#### Analisis Hasil:
+Dari hasil query terlihat bahwa:
+- Variasi Manfaat: Manfaat ekonomi per peserta bervariasi dari 400,000 hingga 937,500 IDR
+- Proyek Unggulan: Takalar memiliki manfaat per peserta tertinggi (937,500 IDR)
+- Trade-off: Proyek dengan peserta lebih banyak cenderung memiliki manfaat per peserta lebih rendah
+- Konsistensi: Beberapa proyek memiliki manfaat total yang sama (7,500,000 IDR) meski jumlah peserta berbeda
+
+#### Interpretasi:
+Hasil ini menunjukkan bahwa:
+- Distribusi manfaat tidak merata antar proyek
+- Ada kemungkinan perbedaan strategi distribusi manfaat
+- Proyek dengan skala lebih kecil (peserta lebih sedikit) bisa memberikan manfaat lebih besar per orang
+
+#### Rekomendasi:
+- Standarisasi Manfaat: Kembangkan pedoman distribusi manfaat yang lebih adil
+- Studi Komparatif: Pelajari mengapa proyek tertentu bisa memberikan manfaat lebih besar per peserta
+- Monitoring: Lacak dampak manfaat ekonomi terhadap partisipasi jangka panjang
+
 
 
 ## Prediksi Kredit Karbon Berbasis Time Series dengan ARIMA
@@ -551,7 +630,7 @@ Dengan implementasi strategi ini, dalam waktu 12 bulan ke depan diharapkan:
 - Kredit karbon meningkat 20% melalui pengambilan keputusan berbasis data
 - Terbangun sistem pelaporan dan pemantauan proyek konservasi yang transparan, otomatis, dan real-time
 
-REFERENSI
+
 
 
 
