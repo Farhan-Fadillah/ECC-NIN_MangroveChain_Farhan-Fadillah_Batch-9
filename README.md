@@ -144,12 +144,6 @@ Setiap kombinasi unik akan menjadi satu baris hasil (aggregasi).
 #### 4. ORDER BY
 Dalam setiap proyek, jenis aktivitas diurutkan berdasarkan frekuensi tertinggi → memberi informasi aktivitas mana yang paling dominan dilakukan.
 
-Contoh Output yang Diharapkan
-Conservation_ID	Location	Activity_Type	Frequency	Avg_Participants	Total_Benefit
-C001	Pontianak	Pelatihan	3	25.67	3,750,000
-C001	Pontianak	Penanaman	2	30.00	2,500,000
-C002	Bengkulu	Sosialisasi	1	20.00	1,000,000
-
 #### Manfaat Analisis Ini
 - Mengidentifikasi aktivitas yang paling sering dilakukan di setiap proyek.
 - Menilai partisipasi masyarakat untuk tiap jenis kegiatan.
@@ -220,12 +214,6 @@ Hasilnya: setiap baris mewakili satu proyek konservasi di satu lokasi tertentu.
 Mengurutkan hasil berdasarkan manfaat rata-rata per peserta dari tertinggi ke terendah.
 Ini membantu mengidentifikasi proyek mana yang paling efisien dalam memberikan manfaat kepada masyarakat yang terlibat.
 
-Contoh Output yang Diharapkan
-Conservation_ID	Location	Total_Benefit	Avg_Benefit_Per_Activity	Total_Participants	Benefit_Per_Participant
-C002	Serang	9,000,000	3,000,000	45	200,000
-C001	Pontianak	5,000,000	2,500,000	25	200,000
-C003	Jember	7,500,000	2,500,000	60	125,000
-
 #### Manfaat Analisis Ini
 - Memberi gambaran nilai ekonomi langsung yang diterima masyarakat per proyek.
 - Memungkinkan evaluasi efisiensi sosial tiap proyek (apakah banyak peserta namun manfaatnya kecil, atau sedikit peserta tapi manfaatnya besar).
@@ -252,6 +240,96 @@ Hasil ini menunjukkan bahwa:
 - Studi Komparatif: Pelajari mengapa proyek tertentu bisa memberikan manfaat lebih besar per peserta
 - Monitoring: Lacak dampak manfaat ekonomi terhadap partisipasi jangka panjang
 
+### Topic 3 : Tingkat partisipasi relatif terhadap ukuran komunitas
+    WITH community_stats AS (
+      SELECT
+        ce.Conservation_ID,
+        mc.Location,
+        COUNT(DISTINCT cm.Member_ID) AS Total_Community_Members,
+        SUM(ce.Participants) AS Total_Participants,
+        SUM(ce.Participants)*100.0 / NULLIF(COUNT(DISTINCT cm.Member_ID), 0) AS Participation_Percentage
+      FROM
+        community_engagement ce
+      JOIN
+        mangrove_conservation_records mc ON ce.Conservation_ID = mc.Conservation_ID
+      CROSS JOIN
+        community_members cm
+      GROUP BY
+        ce.Conservation_ID, mc.Location
+    )
+    SELECT
+      Conservation_ID,
+      Location,
+      Total_Community_Members,
+      Total_Participants,
+      Participation_Percentage,
+      RANK() OVER (ORDER BY Participation_Percentage DESC) AS Participation_Rank
+    FROM
+      community_stats
+    ORDER BY
+      Participation_Percentage DESC;
+Output File:
+<img width="823" height="83" alt="image" src="https://github.com/user-attachments/assets/e68bf1cc-5c1e-43f6-93cc-d82ade14b164" />
+
+#### Tujuan Utama
+Query ini digunakan untuk mengukur tingkat partisipasi masyarakat dalam proyek konservasi, dengan membandingkan jumlah peserta kegiatan dengan jumlah total anggota komunitas yang tersedia di setiap proyek. Selain itu, query juga memberi peringkat proyek berdasarkan tingkat partisipasi.
+
+#### Struktur dan Penjelasan Komponen
+#### 1. CTE (WITH community_stats AS (...))
+CTE atau Common Table Expression ini digunakan untuk menyusun data ringkasan partisipasi komunitas per proyek sebelum dianalisis lebih lanjut.
+
+Penjelasan kolom:
+- ce.Conservation_ID: ID proyek konservasi.
+- mc.Location: Lokasi proyek.
+- COUNT(DISTINCT cm.Member_ID) → Total_Community_Members: Jumlah unik anggota komunitas (menghindari duplikasi).
+- SUM(ce.Participants) → Total_Participants: Jumlah total peserta dari semua aktivitas dalam satu proyek.
+
+SUM(...) * 100 / COUNT(...) → Participation_Percentage: Persentase partisipasi, yaitu:
+
+(Total Peserta / Jumlah Anggota Komunitas)
+×
+100
+(Total Peserta / Jumlah Anggota Komunitas)×100
+Digunakan NULLIF(..., 0) untuk menghindari pembagian dengan nol jika tidak ada anggota terdaftar.
+
+#### 2. CROSS JOIN
+CROSS JOIN menyebabkan setiap baris dari community_engagement digabungkan dengan setiap baris dari community_members. Jika tidak disaring lebih lanjut (misalnya berdasarkan Conservation_ID)
+
+#### 3. GROUP BY
+Mengelompokkan data per proyek dan lokasi.
+Setiap baris hasilnya mewakili satu proyek konservasi di satu lokasi.
+
+#### 4. Main SELECT
+Mengambil semua metrik dari CTE.
+
+RANK() OVER (...) digunakan untuk memberi peringkat proyek berdasarkan tingkat partisipasi dari yang tertinggi ke terendah.
+
+#### 5. ORDER BY
+Menampilkan proyek dengan partisipasi tertinggi terlebih dahulu, untuk membantu mengidentifikasi proyek yang paling efektif melibatkan masyarakat.
+
+#### Manfaat Analisis Ini
+- Memberikan wawasan tentang seberapa besar keterlibatan masyarakat dalam proyek konservasi.
+- Memudahkan dalam mengidentifikasi proyek yang membutuhkan peningkatan partisipasi.
+- Mendukung pembuatan kebijakan berbasis data seperti:
+- Perluasan komunikasi ke komunitas dengan partisipasi rendah.
+- Insentif untuk proyek dengan keterlibatan tinggi.
+
+#### Analisis Hasil:
+Dari hasil query terlihat bahwa:
+- Partisipasi Tinggi: Semua proyek menunjukkan persentase partisipasi >100% karena jumlah peserta melebihi anggota komunitas
+- Data Anggota Terbatas: Hanya 1 anggota komunitas yang tercatat per proyek, menunjukkan kemungkinan ketidaklengkapan data
+- Proyek Unggulan: Lampung Barat memiliki partisipasi relatif tertinggi (1500%)
+
+#### Interpretasi:
+Hasil ini menunjukkan bahwa:
+- Data anggota komunitas mungkin tidak lengkap atau tidak terhubung dengan benar ke proyek
+- Partisipasi sebenarnya mungkin jauh lebih rendah dari yang terlihat
+- Perlu verifikasi dan pelengkapan data anggota komunitas
+
+#### Rekomendasi:
+- Validasi Data: Verifikasi hubungan antara anggota komunitas dan proyek
+- Pelengkapan Data: Tambahkan data anggota komunitas yang lebih lengkap
+- Metrik Alternatif: Pertimbangkan metrik partisipasi absolut jika data relatif tidak akurat
 
 
 ## Prediksi Kredit Karbon Berbasis Time Series dengan ARIMA
