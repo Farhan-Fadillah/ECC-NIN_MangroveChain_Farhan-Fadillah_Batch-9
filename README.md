@@ -1469,7 +1469,7 @@ Dengan implementasi strategi ini, dalam waktu 12 bulan ke depan diharapkan:
 - Kredit karbon meningkat 20% melalui pengambilan keputusan berbasis data
 - Terbangun sistem pelaporan dan pemantauan proyek konservasi yang transparan, otomatis, dan real-time
 
-
+------------
 
 
 
