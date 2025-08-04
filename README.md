@@ -77,6 +77,8 @@ Lingkup Proyek
 - Teknologi: Blockchain, GIS, drone, dan sistem pelaporan berbasis dashboard.
 - Pemangku Kepentingan: Masyarakat lokal, KLHK, lembaga donor, investor karbon, akademisi, dan pemerintah daerah.
 
+------------
+
 # PEMBAHASAN TOPIC PERMASALAHAN
 
 ## Studi Kasus 1 : Analisis Efektivitas Regulasi & Dampak Biodiversitas
@@ -317,6 +319,424 @@ No:
 - Lahan komunitas dan izin yang belum disetujui justru berkaitan dengan kepadatan pohon yang lebih tinggi, mungkin karena belum terjadi intervensi pembangunan.
 - Kehadiran batas wilayah tampaknya mendukung kualitas air, mungkin karena pengelolaan lebih teratur.
 - Lahan negara menunjukkan hasil negatif di semua metrik, yang bisa menandakan kurangnya perlindungan atau pengelolaan efektif.
+
+------------
+
+## Studi Kasus 2 : Optimalisasi Pendanaan Berbasis Blockchain
+
+### Latar Belakang Masalah
+Investor dampak semakin membutuhkan bukti terverifikasi tentang dampak lingkungan dan integritas data. Sebuah konsorsium investor hijau telah mengalokasikan $15 juta untuk proyek mangrove tetapi membutuhkan jaminan bahwa dana akan mendukung proyek dengan:
+- Perlindungan data blockchain yang kuat (enkripsi tinggi)
+- Persetujuan masyarakat yang terdokumentasi
+- Efisiensi penyerapan karbon yang terbukti
+
+### Persyaratan Analisis
+- Kuantifikasi penyerapan CO2 per juta Rupiah yang diinvestasikan
+- Verifikasi kepatuhan tata kelola data blockchain
+- Identifikasi proyek berkinerja terbaik yang memenuhi semua kriteria
+
+## Pembahasan Analisa dengan Query SQL
+
+### Topic 1 : Kuantifikasi penyerapan CO2 per juta Rupiah yang diinvestasikan
+    SELECT
+      fs.Conservation_ID,
+      fs.Source_Name AS "Sumber Dana",
+      fs.Amount_IDR,
+      ei.CO2_Sequestration_Tonnes,
+      ei.CO2_Sequestration_Tonnes / (fs.Amount_IDR/1000000) AS "CO2_per_juta_IDR",
+      ei.Impact_Type
+    FROM
+      funding_sources fs
+    JOIN
+      environmental_impact ei ON fs.Conservation_ID = ei.Conservation_ID
+    WHERE
+      ei.Impact_Type = 'Carbon Storage'
+    ORDER BY
+      "CO2_per_juta_IDR" DESC;
+  Output file:
+  <img width="699" height="83" alt="image" src="https://github.com/user-attachments/assets/267fd1d8-83b0-456f-b8c2-29b2c70a478a" />
+
+### Analisis Efisiensi Pendanaan Konservasi terhadap Penyerapan Karbon
+SQL ini dirancang untuk **mengevaluasi seberapa efisien dana konservasi digunakan dalam menyerap emisi karbon (CO₂)**. Fokus analisa diarahkan pada proyek-proyek konservasi yang berdampak langsung pada **penyimpanan karbon (carbon storage)**, dengan membandingkan jumlah karbon yang berhasil diserap terhadap jumlah dana yang dikeluarkan.
+
+### Tujuan Utama
+Tujuan dari analisa ini adalah untuk:
+- Mengidentifikasi **proyek konservasi karbon** yang paling **efisien secara anggaran**.
+- Menghitung rasio **ton CO₂ yang diserap per satu juta rupiah**.
+- Memberikan dasar bagi pengambilan keputusan dalam **alokasi dana konservasi** berdasarkan kinerja aktual.
+- Membantu stakeholders memahami nilai ekonomis dari setiap investasi konservasi.
+
+
+### Struktur Konsep dan Cara Kerja Query
+
+#### 1. **Tabel yang Digunakan**
+- `funding_sources`: berisi informasi dana proyek, termasuk ID proyek (`Conservation_ID`), nama sumber dana, dan jumlah dana (`Amount_IDR`).
+- `environmental_impact`: mencatat dampak lingkungan dari masing-masing proyek, termasuk jenis dampak (`Impact_Type`) dan jumlah CO₂ yang diserap (`CO2_Sequestration_Tonnes`).
+
+#### 2. **JOIN antar Tabel**
+Data digabung berdasarkan `Conservation_ID`, yaitu ID unik dari proyek konservasi, untuk menghubungkan data pendanaan dengan hasil dampak lingkungannya.
+
+#### 3. **Filter Data**
+Query hanya memilih data dengan `Impact_Type = 'Carbon Storage'`, sehingga hanya proyek penyimpanan karbon yang dianalisis.
+
+#### 4. **Perhitungan Efisiensi**
+Rasio efisiensi dihitung dengan rumus:
+CO₂ per 1 juta IDR = Total CO₂ diserap / (Jumlah dana / 1.000.000)
+Hasilnya memberikan metrik: **berapa ton CO₂ yang diserap setiap 1 juta rupiah** dana.
+
+#### 5. **Pengurutan Hasil**
+Hasil diurutkan dari proyek dengan **efisiensi tertinggi ke terendah**, sehingga proyek paling berdampak langsung terlihat di atas.
+
+#### Manfaat Analisa
+- **Mendeteksi proyek konservasi yang hemat biaya** dan berdampak tinggi.
+- Memberikan alat ukur objektif untuk **perbandingan antar proyek** berbasis rasio hasil terhadap biaya.
+- Menjadi dasar evaluasi dalam pelaporan efektivitas investasi konservasi kepada donor, lembaga pendanaan, dan regulator.
+- Memperkuat akuntabilitas dan transparansi dalam program lingkungan berbasis dana publik atau swasta.
+
+#### Interpretasi Hasil
+Hasil query akan menampilkan daftar proyek konservasi dengan kolom:
+- **Sumber Dana**: dari mana dana berasal.
+- **Jumlah Dana (IDR)**: total dana yang digunakan.
+- **Penyerapan CO₂**: jumlah karbon yang berhasil diserap (dalam ton).
+- **Efisiensi (CO₂ per juta IDR)**: metrik utama untuk analisa.
+- **Jenis Dampak**: dalam hal ini selalu `'Carbon Storage'`.
+
+#### Contoh Interpretasi:
+| Conservation_ID | Sumber Dana     | Amount_IDR | CO₂ (Ton) | CO₂ per juta IDR |
+|-----------------|------------------|------------|-----------|------------------|
+| 101             | Lembaga A         | 10.000.000 | 50        | 5.00             |
+| 102             | Donatur B         | 20.000.000 | 60        | 3.00             |
+| 103             | Pemerintah C      | 15.000.000 | 75        | 5.00             |
+
+Interpretasi:
+- Proyek 101 dan 103 memiliki efisiensi yang sama (5 ton per juta IDR), meskipun jumlah CO₂-nya berbeda.
+- Proyek 102 terlihat kurang efisien meskipun menyerap karbon dalam jumlah besar, karena biayanya lebih tinggi.
+
+#### Rekomendasi Analisa
+Berdasarkan hasil analisa ini, berikut rekomendasi yang dapat diambil:
+1. **Prioritaskan proyek dengan efisiensi tinggi** dalam pendanaan selanjutnya, karena mampu menyerap karbon lebih banyak per unit dana.
+2. Gunakan hasil ini untuk **membuat klasifikasi proyek**: efisiensi tinggi, sedang, dan rendah.
+3. Lakukan investigasi lebih lanjut pada proyek dengan **efisiensi rendah**, untuk mengetahui penyebabnya (misalnya: biaya overhead, lokasi geografis, teknologi yang digunakan).
+4. Jadikan metrik ini sebagai bagian dari **framework evaluasi rutin** dalam program konservasi karbon.
+5. Gunakan visualisasi tambahan (grafik batang, bubble chart, atau heatmap) untuk menyampaikan hasil ke publik atau pengambil keputusan.
+
+#### Kesimpulan
+Analisa ini memberikan **indikator kuantitatif sederhana namun kuat** untuk mengukur efektivitas dana konservasi dalam menyerap karbon. Dengan membandingkan CO₂ per juta IDR, organisasi dapat lebih bijak dalam:
+- Menentukan proyek prioritas
+- Menyusun anggaran
+- Menyampaikan bukti kinerja lingkungan kepada para pemangku kepentingan
+
+### Topic 2 : Persetujuan masyarakat yang terdokumentasi
+    WITH compliance_stats AS (
+      SELECT
+        Conservation_ID,
+        COUNT(*) AS total_records,
+        SUM(CASE WHEN Encryption_Level = 'High' AND Consent_Obtained = 'Yes' THEN 1 ELSE 0 END) AS compliant_records
+      FROM
+        blockchain_data_compliance
+      GROUP BY
+        Conservation_ID
+    )
+    SELECT
+      Conservation_ID,
+      total_records,
+      compliant_records,
+      ROUND((compliant_records::numeric / total_records) * 100, 2) AS compliance_percentage
+    FROM
+      compliance_stats
+    ORDER BY
+      compliance_percentage DESC;
+Output File : <img width="483" height="84" alt="image" src="https://github.com/user-attachments/assets/38ce9474-c01f-487b-95d2-c6768a34da85" />
+
+### Analisis Kepatuhan Proyek terhadap Standar Keamanan Data Blockchain
+Analisa ini berfokus pada pengukuran **tingkat kepatuhan proyek konservasi** terhadap dua indikator utama dalam standar keamanan data blockchain:
+1. **Tingkat enkripsi (Encryption Level)** yang harus *tinggi*.
+2. **Persetujuan data (Consent Obtained)** yang harus *ada/Yes*.
+
+#### Tujuan Utama
+Tujuan dari query ini adalah:
+- Mengukur **presentase kepatuhan data** proyek konservasi terhadap standar keamanan berbasis blockchain.
+- Mengidentifikasi proyek mana yang sudah memenuhi **standar tertinggi** dalam hal perlindungan data.
+- Menyediakan **indikator numerik (dalam persen)** untuk mempermudah pemantauan dan pelaporan tingkat kepatuhan.
+
+### Struktur Konsep dan Cara Kerja
+#### 1. **CTE (Common Table Expression): `compliance_stats`**
+- Mengelompokkan data dari tabel `blockchain_data_compliance` berdasarkan `Conservation_ID`.
+- Untuk setiap proyek:
+  - **`total_records`**: jumlah total entri terkait data blockchain.
+  - **`compliant_records`**: jumlah entri yang memenuhi syarat:
+    - Enkripsi = 'High'
+    - Persetujuan = 'Yes'
+
+#### 2. **Perhitungan Presentase Kepatuhan**
+- Menghitung **presentase kepatuhan** dengan membagi jumlah data yang memenuhi syarat (`compliant_records`) dengan total data (`total_records`), dikalikan 100 dan dibulatkan ke dua desimal.
+
+#### 3. **Pengurutan Hasil**
+- Data diurutkan dari proyek dengan tingkat kepatuhan tertinggi ke yang terendah untuk memudahkan identifikasi proyek paling patuh.
+
+#### Manfaat Analisa
+- **Evaluasi akuntabilitas dan keamanan data** dalam proyek konservasi.
+- Memberikan dasar untuk **audit teknologi dan kepatuhan digital** terhadap prinsip transparansi dan perlindungan data.
+- Membantu organisasi atau regulator dalam **mengidentifikasi risiko pelanggaran privasi atau keamanan data**.
+- Mendukung pelaporan ke publik atau donor mengenai tingkat keandalan sistem data berbasis blockchain.
+
+#### Interpretasi Hasil
+Tabel hasil akan berisi:
+| Conservation_ID | Total Records | Compliant Records | Compliance (%) |
+|-----------------|----------------|--------------------|----------------|
+| 101             | 10             | 10                 | 100.00         |
+| 102             | 8              | 5                  | 62.50          |
+| 103             | 12             | 6                  | 50.00          |
+
+#### Penjelasan:
+- Proyek dengan **100% kepatuhan** menunjukkan bahwa semua data terenkripsi secara maksimal **dan** memiliki persetujuan data.
+- Proyek dengan **<100%** mungkin memiliki:
+  - Tingkat enkripsi yang tidak sesuai (Medium/Low).
+  - Kurangnya persetujuan data.
+- Proyek dengan **0%** sangat rentan terhadap masalah keamanan dan etika data.
+
+#### Rekomendasi
+Berdasarkan analisa ini, rekomendasi yang bisa diambil antara lain:
+1. **Audit menyeluruh** terhadap proyek dengan kepatuhan rendah untuk memahami akar permasalahan.
+2. Terapkan **kebijakan internal** agar semua entri data memiliki enkripsi tinggi dan persetujuan sah.
+3. Jadikan **persentase kepatuhan** ini sebagai **Key Performance Indicator (KPI)** untuk evaluasi proyek digital.
+4. Lakukan **pelatihan kepada tim teknis dan hukum** terkait pentingnya kepatuhan data digital.
+5. Kembangkan sistem **pemberitahuan otomatis** saat entri data baru tidak memenuhi standar keamanan.
+
+#### Kesimpulan
+Analisis ini memberikan pandangan yang jelas tentang **sejauh mana proyek konservasi menerapkan keamanan dan etika pengelolaan data** dalam sistem blockchain. Tingkat kepatuhan yang tinggi mencerminkan:
+- Kinerja data yang aman
+- Proses administrasi yang transparan
+- Kepatuhan terhadap prinsip digital governance
+Sementara itu, proyek dengan tingkat kepatuhan rendah memerlukan perhatian khusus sebelum berlanjut ke fase pendanaan atau ekspansi.
+
+### Topic 3 : Efisiensi penyerapan karbon yang terbukti
+    SELECT
+      fs.Conservation_ID,
+      fs.Source_Name,
+      fs.Amount_IDR,
+      ei.CO2_Sequestration_Tonnes,
+      ei.CO2_Sequestration_Tonnes / (fs.Amount_IDR/1000000) AS CO2_per_juta_IDR,
+      bdc.Encryption_Level,
+      bdc.Consent_Obtained
+    FROM
+      funding_sources fs
+    JOIN
+      environmental_impact ei ON fs.Conservation_ID = ei.Conservation_ID
+    JOIN
+      blockchain_data_compliance bdc ON fs.Conservation_ID = bdc.Conservation_ID
+    WHERE
+      ei.Impact_Type = 'Carbon Storage'
+      AND bdc.Encryption_Level = 'High'
+      AND bdc.Consent_Obtained = 'Yes'
+      AND fs.Amount_IDR >= 50000000
+    ORDER BY
+      CO2_per_juta_IDR DESC,
+      fs.Amount_IDR DESC;
+Output File : <img width="824" height="84" alt="image" src="https://github.com/user-attachments/assets/527ff627-8d76-42dc-9e0c-39219dd24460" />
+
+### Analisis Proyek Konservasi Karbon dengan Standar Keamanan Data Tinggi dan Efisiensi Anggaran
+SQL ini dirancang untuk **mengidentifikasi proyek konservasi karbon yang memenuhi standar keamanan data blockchain tertinggi**, telah mendapat persetujuan penggunaan data, dan memiliki jumlah dana minimum yang layak. Fokus utamanya adalah **efisiensi penyerapan CO₂ terhadap dana**, hanya untuk proyek yang sudah *terverifikasi secara digital dan aman*.
+
+#### Tujuan Utama
+Tujuan dari analisis ini adalah:
+- Menilai **efisiensi penyerapan karbon (CO₂)** untuk proyek dengan **enkripsi data tinggi dan persetujuan legal lengkap**.
+- Menyaring hanya proyek yang memiliki **pendanaan minimum sebesar 50 juta rupiah**, agar analisis berfokus pada proyek berdampak menengah hingga besar.
+- Menyediakan metrik **CO₂ per juta rupiah** sebagai tolok ukur efisiensi lingkungan berbasis keuangan.
+- Membantu dalam seleksi dan pembiayaan proyek konservasi berbasis data.
+
+### Struktur Konsep dan Cara Kerja
+#### 1. **Tabel yang Digunakan**
+- `funding_sources`: menyimpan informasi pendanaan, nama donor, dan ID proyek.
+- `environmental_impact`: berisi data dampak lingkungan, termasuk penyerapan karbon (CO₂).
+- `blockchain_data_compliance`: mencatat status enkripsi data dan persetujuan penggunaan data.
+
+#### 2. **JOIN dan Filter**
+Data digabung menggunakan `Conservation_ID`, lalu difilter dengan kriteria:
+- **Jenis dampak** = `'Carbon Storage'`
+- **Tingkat enkripsi** = `'High'`
+- **Persetujuan data** = `'Yes'`
+- **Jumlah dana** ≥ 50 juta IDR
+
+#### 3. **Perhitungan Efisiensi**
+Menghitung rasio efisiensi:
+CO₂_per_juta_IDR = Total CO₂ diserap / (Jumlah Dana / 1.000.000)
+
+Nilai ini menunjukkan seberapa banyak CO₂ (dalam ton) yang berhasil diserap untuk setiap satu juta rupiah.
+
+#### 4. **Pengurutan Hasil**
+- Proyek dengan efisiensi tertinggi ditampilkan paling atas.
+- Jika efisiensi sama, proyek dengan dana lebih besar diurutkan terlebih dahulu.
+
+#### Manfaat Analisa
+- Menyediakan data terverifikasi yang mendukung **pengambilan keputusan berbasis performa dan kepatuhan data**.
+- Menyaring proyek yang sudah **siap didanai dan transparan**, karena telah memenuhi semua aspek keamanan dan legalitas digital.
+- Membantu donor, pemerintah, atau investor untuk memilih proyek yang **paling hemat biaya** dan **berdampak maksimal terhadap lingkungan**.
+- Memudahkan audit dan pelaporan karena hanya menampilkan proyek yang **memenuhi semua syarat minimum kualitas data dan anggaran**.
+
+#### Interpretasi Hasil
+Tabel hasil akan mencantumkan:
+| Conservation_ID | Source_Name | Amount_IDR | CO₂ (Ton) | CO₂/Juta IDR | Encryption | Consent |
+|-----------------|-------------|------------|-----------|--------------|------------|---------|
+| 200             | GreenFund   | 80.000.000 | 100       | 1.25         | High       | Yes     |
+| 187             | EcoBank     | 120.000.000| 120       | 1.00         | High       | Yes     |
+| 165             | ClimateOrg  | 50.000.000 | 60        | 1.20         | High       | Yes     |
+
+#### Penjelasan:
+- Proyek pertama paling efisien (1.25 ton CO₂ per juta IDR).
+- Semua proyek memiliki tingkat keamanan data dan persetujuan yang sah.
+- Semua proyek memenuhi syarat minimal pendanaan dan bisa dianggap prioritas dalam pemilihan program lanjutan.
+
+#### Rekomendasi
+Berdasarkan hasil dan kriteria yang digunakan, beberapa rekomendasi yang dapat diambil:
+1. **Fokuskan pendanaan ke proyek dengan efisiensi tinggi**, terutama jika tingkat keamanan data dan persetujuan sudah memenuhi syarat.
+2. Jadikan metrik **CO₂/juta IDR** sebagai bagian dari sistem evaluasi rutin proyek konservasi.
+3. Terapkan filter keamanan data yang sama dalam proyek-proyek masa depan sebagai standar minimum.
+4. Kembangkan laporan publik atau dashboard visual berdasarkan analisis ini agar mudah dipahami oleh pemangku kepentingan non-teknis.
+5. Gunakan hasil ini sebagai referensi untuk **pemeringkatan proyek konservasi karbon** di tingkat nasional atau internasional.
+
+#### Kesimpulan
+Query ini memberikan metode penyaringan yang sangat terarah dan terukur untuk:
+- Menentukan proyek konservasi yang **bernilai tinggi secara lingkungan**,
+- Sudah **patuh pada prinsip etika dan keamanan data digital**, serta
+- Layak diprioritaskan untuk **alokasi pendanaan** lebih lanjut.
+Dengan menggabungkan aspek **efisiensi lingkungan**, **integritas digital**, dan **kelayakan finansial**, analisis ini menciptakan pendekatan yang seimbang antara konservasi, teknologi, dan transparansi.
+
+# Analisis Pendanaan Konservasi terhadap Penyerapan CO₂ dan Keamanan Data
+    import pandas as pd
+    import psycopg2
+    from sqlalchemy import create_engine
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    import numpy as np
+    import plotly.express as px
+    
+    # Setup koneksi database
+    conn_string = "postgresql://postgres:postgresql@localhost:5432/postgres"
+    db = create_engine(conn_string)
+    conn = db.connect()
+    
+    # Query data untuk visualisasi
+    query = """
+    SELECT fs.conservation_id, fs.source_name, fs.amount_idr,
+    ei.co2_sequestration_tonnes,
+    ei.CO2_Sequestration_Tonnes / (fs.amount_idr/1000000) AS co2_per_juta_idr,
+    bdc.encryption_level, bdc.Consent_Obtained
+    FROM funding_sources fs
+    JOIN environmental_impact ei ON fs.conservation_id = ei.conservation_id
+    JOIN blockchain_data_compliance bdc ON fs.Conservation_ID = bdc.conservation_id
+    WHERE ei.Impact_Type = 'Carbon Storage'
+    """
+    
+    df = pd.read_sql(query, conn)
+    conn.close()
+    
+    # Konversi Encription_level
+    df['encryption_score'] = df['encryption_level'].map({'High': 3, 'Medium' : 2, 'Low' : 1})
+    
+    #vIsualisasi 3D dengan Plotly
+    fig = px.scatter_3d(
+        df,
+        x = 'amount_idr',
+        y = 'co2_sequestration_tonnes',
+        z = "encryption_score",
+        color = 'source_name',
+        size = 'co2_per_juta_idr',
+        hover_name= 'conservation_id',
+        labels = {
+            'amount_idr' : 'Jumlah Dana (IDR)',
+            'co2_sequestration_tonnes' : 'Penyerapan CO2 (Dalam Ton)',
+            'encryption_score' : 'Tingkat Enkripsi',
+            'source_name' : 'Sumber Dana',
+            'co2_per_juta_rupiah' : 'Rata-rata CO2/Juta Rupiah'
+            },
+            title = 'Visualisasi Python: Scatter 3D (Jumlah Dana vs Penyerapan CO2 vs Tingkat Enkripsi'
+    )
+    # UPDATE LAYOUT
+    fig.update_layout(
+        scene = dict(
+            xaxis_title = 'Jumlah Dana (Juta IDR)',
+            yaxis_title = 'Penyerapan CO2',
+            zaxis_title = "Tingkat Enkripsi",
+            zaxis = dict(tickvals= [1,2,3], ticktext=['Low','medium','High'])
+        ),
+        margin = dict(l=0, r=0 , b=0, t=30),
+        height = 600,
+        width = 800
+    )
+    fig.show()
+<img width="809" height="609" alt="image" src="https://github.com/user-attachments/assets/c8879490-8830-4699-8ed0-d5fb5b9ed608" />
+
+## Tujuan Analisis
+Analisis ini bertujuan untuk:
+- Menilai **seberapa efektif** dana konservasi dalam menyerap karbon (CO₂).
+- Mengukur **efisiensi penyerapan karbon** berdasarkan setiap **satu juta rupiah** dana yang dikeluarkan.
+- Mengetahui bagaimana **tingkat keamanan data (encryption level)** berhubungan dengan kualitas proyek.
+- Menyediakan **visualisasi eksploratif** untuk mendukung pengambilan keputusan yang berbasis data.
+
+## Konsep dan Cara Kerja
+### 1. Koneksi ke Database
+Data diambil dari database PostgreSQL yang berisi informasi terkait proyek konservasi, dampak lingkungan, dan kepatuhan terhadap standar keamanan data.
+
+### 2. Pengambilan dan Penyatuan Data
+Data digabung dari tiga sumber utama:
+- **Sumber Dana Konservasi**: Jumlah dana, nama penyumbang, dan ID proyek.
+- **Dampak Lingkungan**: Fokus pada **penyerapan CO₂** sebagai indikator manfaat lingkungan.
+- **Kepatuhan Blockchain**: Menyediakan informasi tentang **tingkat enkripsi** dan **persetujuan data**.
+
+### 3. Transformasi dan Perhitungan
+Beberapa transformasi dilakukan:
+- **Konversi kualitas enkripsi** (High, Medium, Low) menjadi skor numerik (3, 2, 1).
+- Perhitungan **rasio efisiensi**: seberapa banyak CO₂ yang berhasil diserap untuk setiap **1 juta rupiah** yang digunakan.
+
+### 4. Visualisasi Interaktif 3D
+Data divisualisasikan dalam bentuk **grafik scatter 3D** dengan sumbu:
+- **X**: Jumlah dana proyek (IDR)
+- **Y**: Total penyerapan karbon (Ton CO₂)
+- **Z**: Skor enkripsi (1–3)
+Ukuran titik menggambarkan efisiensi penyerapan karbon per satu juta rupiah, dan warna dibedakan berdasarkan sumber pendanaan.
+
+## Hasil Analisa
+Hasil visualisasi menunjukkan berbagai pola penting:
+- Beberapa proyek dengan **dana sedang** memiliki **efisiensi penyerapan karbon yang sangat tinggi**, ditunjukkan oleh ukuran titik yang besar.
+- Proyek dengan **skor enkripsi tinggi** cenderung memiliki **kinerja lingkungan yang lebih baik**, menandakan integritas data dan pelaporan yang lebih dapat dipercaya.
+- Ada proyek dengan **dana besar** tapi **efisiensi rendah**, yang bisa menjadi perhatian dalam evaluasi keberlanjutan.
+
+## Interpretasi Data
+Beberapa interpretasi yang dapat ditarik:
+- Proyek dengan **penyerapan CO₂ tinggi dan skor enkripsi tinggi** kemungkinan merupakan proyek yang **berdampak dan aman** secara digital.
+- Titik-titik besar menunjukkan proyek **efisien secara anggaran**, dan perlu dijadikan contoh dalam pendanaan berikutnya.
+- Banyaknya titik di skor enkripsi rendah bisa mengindikasikan perlunya peningkatan standar keamanan data dalam proyek konservasi.
+
+## Rekomendasi
+Berdasarkan temuan dari analisis ini, beberapa rekomendasi yang dapat diberikan adalah:
+1. **Dukung proyek yang efisien**, yaitu yang mampu menyerap karbon dengan rasio tinggi terhadap dana yang digunakan.
+2. **Naikkan standar keamanan data** (enkripsi) untuk seluruh proyek konservasi, agar transparansi dan kepercayaan publik meningkat.
+3. Gunakan hasil analisa ini untuk merancang **kebijakan pendanaan berbasis dampak**, bukan hanya berdasarkan jumlah pengeluaran.
+4. Lakukan **monitoring rutin** terhadap proyek yang punya dana besar tapi dampak kecil, untuk evaluasi dan audit.
+
+## Manfaat Analisa
+- Memberikan gambaran **multidimensi** antara keuangan, lingkungan, dan keamanan data.
+- Membantu stakeholder dan pemangku kebijakan dalam **memprioritaskan alokasi dana** secara strategis.
+- Memperkenalkan metode visualisasi yang **interaktif dan modern**, cocok untuk pelaporan ke publik atau presentasi.
+
+## Kesimpulan
+1. Hubungan Dana vs Penyerapan CO₂
+Terlihat hubungan searah (positif): semakin besar dana yang diberikan, semakin besar penyerapan CO₂.
+Titik-titik merah (Kementerian LHK) menunjukkan pendanaan lebih besar dan hasil penyerapan CO₂ lebih tinggi dibandingkan titik-titik biru (Yayasan Hijau).
+
+2. Tingkat Enkripsi dan Efektivitas
+Yayasan Hijau (biru) beroperasi pada tingkat enkripsi "High", tetapi hanya mencapai penyerapan CO₂ yang relatif rendah (400–520) dengan dana di bawah 50 juta IDR.
+Kementerian LHK (merah) beroperasi pada tingkat enkripsi "Medium", tetapi dengan dana lebih besar (50–70 juta IDR), berhasil mencapai penyerapan CO₂ hingga 700.
+
+Interpretasi: meskipun Yayasan Hijau menjaga keamanan tinggi (High encryption), program mereka tampaknya kurang efektif dalam penyerapan CO₂ dibanding program dari Kementerian LHK yang menggunakan tingkat enkripsi medium tapi memberikan lebih banyak dana.
+
+### Kesimpulan Analisa
+- Dana yang lebih besar secara konsisten berasosiasi dengan peningkatan penyerapan CO₂, terlepas dari tingkat enkripsi.
+- Tingkat enkripsi tidak terlihat memengaruhi efektivitas secara langsung terhadap penyerapan CO₂ dalam data ini.
+- Kementerian LHK menunjukkan performa lebih baik dalam hal efisiensi pendanaan terhadap penyerapan CO₂, walau dengan standar keamanan (enkripsi) yang lebih rendah.
+  
+------------
 
 ## Studi Kasus 3 : Prediksi Kinerja Proyek Berbasis Keterlibatan Masyarakat
 
