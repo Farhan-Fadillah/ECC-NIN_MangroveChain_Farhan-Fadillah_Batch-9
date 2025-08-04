@@ -272,13 +272,51 @@ Contoh:
 - Korelasi 0.65 antara permit_status_Approved dan species_count → status izin yang disetujui berkorelasi positif sedang-kuat terhadap jumlah spesies.
 - Korelasi -0.50 antara land_type_Private dan water_quality → lahan privat memiliki hubungan negatif terhadap kualitas air.
 
-
 ## Kesimpulan
+Heatmap ini menunjukkan korelasi antara faktor regulasi (seperti status izin, tipe kepemilikan lahan, dan keberadaan batas wilayah) dengan metrik biodiversitas (jumlah spesies, kepadatan pohon, dan kualitas air). Nilai korelasi berkisar dari -1 hingga 1, di mana:
+- Positif (+) → hubungan searah: jika satu naik, yang lain cenderung naik juga.
+- Negatif (–) → hubungan berlawanan: jika satu naik, yang lain cenderung turun.
+- Semakin mendekati 0 → hubungan lemah atau tidak ada hubungan.
 
-Script ini membantu:
-- **Mengevaluasi kebijakan konservasi** dan dampaknya terhadap ekosistem.
-- **Mengidentifikasi faktor-faktor yang paling berpengaruh** terhadap keanekaragaman hayati.
-- **Mengkomunikasikan data secara visual** kepada pengambil keputusan.
+Berikut penjelasan per faktor:
+#### Status Izin (permit_status)
+Approved:
+- tree_density: korelasi negatif kuat (-0.20) → wilayah dengan izin disetujui cenderung memiliki kepadatan pohon lebih rendah.
+- water_quality: korelasi positif (+0.14) → sedikit peningkatan kualitas air.
+- species_count: korelasi lemah (-0.06) → tidak signifikan.
+
+Pending:
+- tree_density: korelasi positif (+0.20) → menunggu izin justru berkaitan dengan kepadatan pohon yang lebih tinggi.
+- water_quality: negatif (-0.14) → kualitas air cenderung menurun.
+- species_count: positif lemah (+0.06) → hampir netral.
+
+#### Tipe Kepemilikan Lahan (land_type)
+Community Land:
+- tree_density: korelasi positif tertinggi (+0.21) → lahan komunitas mendukung kepadatan pohon.
+- species_count: positif (+0.11) → cenderung lebih banyak spesies.
+- water_quality: hampir netral (-0.02).
+
+Private Land:
+- water_quality: positif (+0.13) → kualitas air relatif baik.
+- Korelasi lainnya lemah dan mendekati nol.
+
+State Land:
+- Korelasi negatif di ketiga metrik, terutama tree_density (-0.14), menunjukkan potensi degradasi dalam kawasan milik negara.
+
+#### Batas Wilayah Terdefinisi (boundary_defined)
+Yes:
+- water_quality: korelasi positif (+0.13) → adanya batas wilayah berhubungan dengan kualitas air lebih baik.
+- species_count dan tree_density: korelasi lemah positif.
+
+No:
+- water_quality: korelasi negatif (-0.13) → kualitas air menurun bila batas tidak jelas.
+- Korelasi lainnya juga sedikit negatif.
+
+#### Kesimpulan Umum
+- Faktor regulasi memang berpengaruh, tapi sebagian besar korelasinya lemah.
+- Lahan komunitas dan izin yang belum disetujui justru berkaitan dengan kepadatan pohon yang lebih tinggi, mungkin karena belum terjadi intervensi pembangunan.
+- Kehadiran batas wilayah tampaknya mendukung kualitas air, mungkin karena pengelolaan lebih teratur.
+- Lahan negara menunjukkan hasil negatif di semua metrik, yang bisa menandakan kurangnya perlindungan atau pengelolaan efektif.
 
 ## Studi Kasus 3 : Prediksi Kinerja Proyek Berbasis Keterlibatan Masyarakat
 
