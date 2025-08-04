@@ -91,6 +91,195 @@ Tim konservasi menemukan variasi signifikan dalam hasil monitoring biodiversitas
 
 ## Pembahasan Analisa dengan Query SQL
 
+### Topic : Apakah status persetujuan izin berkorelasi dengan peningkatan biodiversitas yang terukur (kualitas air, kerapatan pohon)?
+
+    SELECT
+      rp.Permit_Status AS "Status Izin",
+      AVG(bm.Tree_Density) AS "Rata-Rata Kerapatan Pohon",
+      AVG(
+        CASE
+          WHEN bm.Water_Quality = 'Good' THEN 3
+          WHEN bm.Water_Quality = 'Moderate' THEN 2
+          WHEN bm.Water_Quality = 'Poor' THEN 1
+          ELSE 0
+        END
+      ) AS "Skor Rata-Rata Kualitas Air",
+      COUNT(*) AS "Jumlah Proyek"
+    FROM
+      regulatory_permits AS rp
+    INNER JOIN
+      biodiversity_monitoring AS bm ON rp.Conservation_ID = bm.Conservation_ID
+    GROUP BY
+      rp.Permit_Status
+    ORDER BY
+      "Rata-Rata Kerapatan Pohon" DESC;
+Output data:
+<img width="521" height="64" alt="image" src="https://github.com/user-attachments/assets/b2feb856-88fa-4964-966a-726b5663bdf4" />
+
+#### Tujuan Utama
+Tujuan utama dari SQL query ini adalah untuk menganalisis pengaruh status izin konservasi terhadap indikator lingkungan, yaitu:
+- Kerapatan pohon
+- Kualitas air
+- Jumlah proyek konservasi
+
+Query ini merangkum data biodiversitas berdasarkan status perizinan, untuk mengetahui apakah status izin tertentu cenderung berkorelasi dengan kondisi lingkungan yang lebih baik atau buruk.
+
+Struktur Konsep dan Cara Kerja Query
+#### 1. SELECT Clause
+- Mengambil status izin konservasi.
+- Menghitung rata-rata dari kerapatan pohon.
+- Mengkonversi kualitas air ke bentuk skor numerik (3 = Baik, 2 = Sedang, 1 = Buruk), lalu diambil rata-ratanya.
+- Menghitung jumlah proyek untuk masing-masing status izin.
+
+#### 2. JOIN Clause
+Menggabungkan dua tabel: regulatory_permits (izin) dan biodiversity_monitoring (lingkungan) berdasarkan Conservation_ID.
+
+#### 3. GROUP BY
+Mengelompokkan hasil berdasarkan status izin konservasi seperti Approved, Pending, atau Denied.
+
+#### 4. ORDER BY
+Mengurutkan hasil dari status izin dengan kerapatan pohon tertinggi ke terendah.
+
+#### Manfaat Analisa
+- Analisa ini sangat bermanfaat untuk:
+- Mengevaluasi efektivitas kebijakan izin konservasi terhadap kondisi lingkungan.
+- Menunjukkan apakah proyek dengan status izin tertentu (misalnya disetujui) cenderung menjaga biodiversitas dengan lebih baik.
+- Memberikan bukti berbasis data untuk perbaikan kebijakan perizinan dan pengawasan.
+
+#### Interpretasi:
+- Proyek dengan izin "Approved" memiliki rata-rata kerapatan pohon dan kualitas air lebih tinggi dibandingkan proyek lain.
+- Proyek tanpa izin yang disetujui mungkin memiliki dampak lingkungan lebih negatif.
+- Skor kualitas air mendekati 3 berarti semakin baik.
+
+#### Rekomendasi Analisa
+- Prioritaskan pengawasan pada proyek yang izinnya ditolak atau belum disetujui, karena mereka menunjukkan indikasi dampak ekologis lebih buruk.
+- Gunakan hasil ini untuk menetapkan kriteria izin yang lebih ketat, misalnya hanya menyetujui proyek yang memiliki rencana konservasi jangka panjang.
+- Lakukan pemantauan berkala pada proyek dengan skor kualitas air rendah untuk mencegah kerusakan lebih lanjut.
+- Buat laporan visual tambahan, misalnya grafik batang atau heatmap, untuk mempermudah pemahaman bagi pihak non-teknis atau pemangku kebijakan.
+
+## Heatmap Matriks Korelasi Faktor Regulasi vs Metrik Biodiversitas
+    import pandas as pd
+    import psycopg2
+    from sqlalchemy import create_engine
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    import numpy as np
+    
+    # Setup koneksi database
+    conn_string = "postgresql://postgres:postgresql@localhost:5432/postgres"
+    db = create_engine(conn_string)
+    conn = db.connect()
+    
+    # Query data untuk visualisasi
+    query = """
+    SELECT rp.Permit_Status, ltr.Land_Type, ltr.Boundary_Defined,
+    bm.Species_Count, bm.Tree_Density,
+    CASE WHEN bm.Water_Quality = 'Good' THEN 3
+    WHEN bm.Water_Quality = 'Moderate' THEN 2
+    ELSE 1 END AS Water_Quality
+    FROM regulatory_permits rp
+    JOIN land_tenure_records ltr ON rp.Conservation_ID = ltr.Conservation_ID
+    JOIN biodiversity_monitoring bm ON rp.Conservation_ID = bm.Conservation_ID
+    """
+    
+    df = pd.read_sql(query, conn)
+    conn.close()
+    
+    # Langkah 1: One-hot encoding kolom kategorikal
+    df_encoded = pd.get_dummies(df, columns=['permit_status', 'land_type', 'boundary_defined'])
+    
+    # Langkah 2: Hitung korelasi antar semua kolom numerik
+    corr_matrix = df_encoded.corr()
+    
+    # Langkah 3: Pilih hanya korelasi antara faktor regulasi dan metrik biodiversitas
+    biodiversity_metrics = ['species_count', 'tree_density', 'water_quality']
+    regulation_vars = [col for col in df_encoded.columns if col not in biodiversity_metrics]
+    
+    # Filter: ambil baris dari regulation_vars dan kolom dari biodiversity_metrics
+    filtered_corr = corr_matrix.loc[regulation_vars, biodiversity_metrics]
+    
+    # Langkah 4: Visualisasi heatmap
+    plt.figure(figsize=(10, 6))
+    sns.heatmap(
+        filtered_corr,
+        annot=True,
+        cmap='coolwarm',
+        center=0,
+        fmt='.2f',
+        linewidths=0.5,
+        linecolor='black',
+        cbar_kws={'label': 'Koefisien Korelasi'}
+    )
+    
+    plt.title('Korelasi Faktor Regulasi dengan Metrik Biodiversitas', fontsize=14, pad=20)
+    plt.xticks(fontsize=10, rotation=45, ha='right')
+    plt.yticks(fontsize=10, rotation=0)
+    plt.tight_layout()
+    plt.show()
+<img width="972" height="598" alt="image" src="https://github.com/user-attachments/assets/23ed79dd-9476-4f03-8f2e-c817af675ad1" />
+
+# Analisis Korelasi Faktor Regulasi terhadap Metrik Biodiversitas
+
+Script ini digunakan untuk menganalisis **hubungan antara kebijakan/regulasi konservasi** (seperti status izin dan jenis kepemilikan lahan) dengan **indikator biodiversitas** (jumlah spesies, kerapatan pohon, dan kualitas air) menggunakan data dari database PostgreSQL. Hasil analisis divisualisasikan dalam bentuk **heatmap korelasi** agar lebih mudah dipahami.
+
+
+## Konsep Cara Kerja Script
+
+### 1. **Koneksi ke Database PostgreSQL**
+Script terhubung ke database lokal PostgreSQL untuk mengambil data yang dibutuhkan. Koneksi dibuat menggunakan sqlalchemy dan psycopg2.
+
+### 2. **Mengambil Data dari Tiga Tabel**
+Data diambil menggunakan query SQL dari tiga tabel:
+- regulatory_permits → informasi status perizinan konservasi.
+- land_tenure_records → jenis dan batas kepemilikan lahan.
+- biodiversity_monitoring → data biodiversitas seperti jumlah spesies, kepadatan pohon, dan kualitas air.
+Data dari ketiga tabel ini di-*join* berdasarkan Conservation_ID.
+
+### 3. **Transformasi Data Kategorikal**
+Kolom-kolom kategorikal seperti permit_status, land_type, dan boundary_defined diubah menjadi format numerik menggunakan **One-Hot Encoding**, agar bisa dihitung korelasinya.
+
+### 4. **Menghitung Korelasi**
+Dengan menggunakan .corr(), script menghitung **matriks korelasi Pearson** antar semua kolom numerik, termasuk hasil encoding dan metrik biodiversitas.
+
+### 5. **Filter Korelasi Tertentu**
+Script hanya mengambil bagian dari matriks korelasi yang menunjukkan hubungan antara:
+- Variabel regulasi (permit, tipe lahan, batas lahan)
+- Indikator biodiversitas (species_count, tree_density, water_quality)
+
+### 6. **Visualisasi dengan Heatmap**
+Menggunakan seaborn.heatmap(), hubungan tersebut divisualisasikan dalam **heatmap** untuk memperlihatkan kekuatan dan arah korelasi.
+
+## Tujuan Script Ini
+- Mengetahui apakah kebijakan/regulasi konservasi berdampak pada biodiversitas.
+- Membantu pengambilan keputusan dalam manajemen konservasi berbasis data.
+- Menyajikan hasil analisis dalam visual yang jelas dan mudah dipahami.
+
+
+## Hasil Analisa (Heatmap Korelasi)
+
+Output dari script ini adalah sebuah **heatmap** yang memperlihatkan:
+- **Kekuatan hubungan** antara faktor regulasi dan indikator biodiversitas.
+- **Arah hubungan** (positif atau negatif).
+
+### Interpretasi Nilai Korelasi:
+| Nilai Korelasi | Interpretasi             |
+|----------------|--------------------------|
+| > 0.7 / < -0.7 | Korelasi kuat            |
+| 0.3 - 0.7      | Korelasi sedang          |
+| < 0.3          | Korelasi lemah/tidak ada |
+
+Contoh:
+- Korelasi 0.65 antara permit_status_Approved dan species_count → status izin yang disetujui berkorelasi positif sedang-kuat terhadap jumlah spesies.
+- Korelasi -0.50 antara land_type_Private dan water_quality → lahan privat memiliki hubungan negatif terhadap kualitas air.
+
+
+## Kesimpulan
+
+Script ini membantu:
+- **Mengevaluasi kebijakan konservasi** dan dampaknya terhadap ekosistem.
+- **Mengidentifikasi faktor-faktor yang paling berpengaruh** terhadap keanekaragaman hayati.
+- **Mengkomunikasikan data secara visual** kepada pengambil keputusan.
+
 ## Studi Kasus 3 : Prediksi Kinerja Proyek Berbasis Keterlibatan Masyarakat
 
 ### Latar Belakang Masalah
