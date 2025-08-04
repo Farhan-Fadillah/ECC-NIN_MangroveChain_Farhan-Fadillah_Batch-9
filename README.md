@@ -79,6 +79,18 @@ Lingkup Proyek
 
 # PEMBAHASAN TOPIC PERMASALAHAN
 
+## Studi Kasus 1 : Analisis Efektivitas Regulasi & Dampak Biodiversitas
+
+### Latar Belakang Masalah
+Tim konservasi menemukan variasi signifikan dalam hasil monitoring biodiversitas di berbagai proyek. Di Kalimantan Timur, proyek dengan izin disetujui menunjukkan kerapatan pohon 40% lebih tinggi dibandingkan proyek dengan status pending, sementara di Jawa, kualitas air tetap buruk meskipun izin sudah disetujui. Analisis ini bertujuan mengungkap pola sistemik bagaimana kerangka regulasi dan struktur kepemilikan lahan mempengaruhi hasil konservasi.
+
+### Pertanyaan Kunci
+- Apakah status persetujuan izin berkorelasi dengan peningkatan biodiversitas yang terukur (kualitas air, kerapatan pohon)?
+- Bagaimana pengaturan kepemilikan lahan yang berbeda (negara, swasta, masyarakat) mempengaruhi keanekaragaman spesies?
+- Apakah proyek dengan batas lahan yang terdefinisi secara hukum mencapai hasil ekologis yang lebih baik?
+
+## Pembahasan Analisa dengan Query SQL
+
 ## Studi Kasus 3 : Prediksi Kinerja Proyek Berbasis Keterlibatan Masyarakat
 
 ### Latar Belakang Masalah
