@@ -370,14 +370,14 @@ Tujuan dari analisa ini adalah untuk:
 ### Struktur Konsep dan Cara Kerja Query
 
 #### 1. **Tabel yang Digunakan**
-- `funding_sources`: berisi informasi dana proyek, termasuk ID proyek (`Conservation_ID`), nama sumber dana, dan jumlah dana (`Amount_IDR`).
-- `environmental_impact`: mencatat dampak lingkungan dari masing-masing proyek, termasuk jenis dampak (`Impact_Type`) dan jumlah CO₂ yang diserap (`CO2_Sequestration_Tonnes`).
+- funding_sources: berisi informasi dana proyek, termasuk ID proyek (Conservation_ID), nama sumber dana, dan jumlah dana (Amount_IDR).
+- environmental_impact: mencatat dampak lingkungan dari masing-masing proyek, termasuk jenis dampak (Impact_Type) dan jumlah CO₂ yang diserap (CO2_Sequestration_Tonnes).
 
 #### 2. **JOIN antar Tabel**
-Data digabung berdasarkan `Conservation_ID`, yaitu ID unik dari proyek konservasi, untuk menghubungkan data pendanaan dengan hasil dampak lingkungannya.
+Data digabung berdasarkan Conservation_ID, yaitu ID unik dari proyek konservasi, untuk menghubungkan data pendanaan dengan hasil dampak lingkungannya.
 
 #### 3. **Filter Data**
-Query hanya memilih data dengan `Impact_Type = 'Carbon Storage'`, sehingga hanya proyek penyimpanan karbon yang dianalisis.
+Query hanya memilih data dengan `Impact_Type = 'Carbon Storage', sehingga hanya proyek penyimpanan karbon yang dianalisis.
 
 #### 4. **Perhitungan Efisiensi**
 Rasio efisiensi dihitung dengan rumus:
@@ -461,7 +461,7 @@ Tujuan dari query ini adalah:
 
 ### Struktur Konsep dan Cara Kerja
 #### 1. **CTE (Common Table Expression): `compliance_stats`**
-- Mengelompokkan data dari tabel `blockchain_data_compliance` berdasarkan `Conservation_ID`.
+- Mengelompokkan data dari tabel blockchain_data_compliance berdasarkan Conservation_ID.
 - Untuk setiap proyek:
   - **`total_records`**: jumlah total entri terkait data blockchain.
   - **`compliant_records`**: jumlah entri yang memenuhi syarat:
@@ -469,7 +469,7 @@ Tujuan dari query ini adalah:
     - Persetujuan = 'Yes'
 
 #### 2. **Perhitungan Presentase Kepatuhan**
-- Menghitung **presentase kepatuhan** dengan membagi jumlah data yang memenuhi syarat (`compliant_records`) dengan total data (`total_records`), dikalikan 100 dan dibulatkan ke dua desimal.
+- Menghitung **presentase kepatuhan** dengan membagi jumlah data yang memenuhi syarat (compliant_records) dengan total data (total_records), dikalikan 100 dan dibulatkan ke dua desimal.
 
 #### 3. **Pengurutan Hasil**
 - Data diurutkan dari proyek dengan tingkat kepatuhan tertinggi ke yang terendah untuk memudahkan identifikasi proyek paling patuh.
