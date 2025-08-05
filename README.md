@@ -1960,4 +1960,529 @@ Ukuran lingkaran menunjukkan **luas wilayah** yang terkena risiko tersebut.
 4. Gunakan peta ini sebagai **dasar diskusi lintas sektor** (pemerintah, LSM, komunitas lokal) terkait risiko pengelolaan ekosistem mangrove.
 5. Terapkan pendekatan serupa pada ekosistem lainnya (misal: hutan rawa, terumbu karang).
 
+------------
+
+## Studi Kasus 5 : Analisis Jaringan Blockchain dalam Konservasi
+
+## Latar Belakang Masalah
+CTO perlu memahami pola berbagi data blockchain untuk mengoptimalkan arsitektur sistem:
+- Distribusi tipe data (Geografis/Personal/Transaksi) per wilayah
+- Korelasi antara level akses dengan volume transaksi karbon
+- Pola temporal penerbitan izin vs aktivitas blockchain
+- Analisis awal menunjukkan proyek dengan data geografis terbuka memiliki volume transaksi 2.5x lebih tinggi.
+
+## Aspek Teknis
+- Analisis jaringan hubungan antara node data
+- Pola aliran informasi antar stakeholder
+- Optimasi desain smart contract
+
+## Pembahasan Analisa dengan Query SQL
+
+### Topic 1 : Distribusi tipe data (Geografis/Personal/Transaksi) per wilayah
+    SELECT
+      c.Location,
+      bdc.Data_Type,
+      COUNT(*) AS jumlah_data,
+      ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (PARTITION BY c.Location), 1) AS persentase
+    FROM
+      mangrove_conservation_records c
+    JOIN
+      blockchain_data_compliance bdc ON c.Conservation_ID = bdc.Conservation_ID
+    GROUP BY
+      c.Location, bdc.Data_Type
+    ORDER BY
+      c.Location, jumlah_data DESC;
+Output File :
+<img width="369" height="83" alt="image" src="https://github.com/user-attachments/assets/bcf00c02-0efe-4756-a461-f2ab65cb9128" />
+
+### Tujuan Utama
+Query ini bertujuan untuk:
+- Menganalisis **jumlah dan persentase jenis data kepatuhan** (Data_Type) berbasis blockchain untuk setiap **lokasi konservasi mangrove**.
+- Menyediakan ringkasan proporsional dari data compliance pada setiap lokasi untuk mendukung **evaluasi kualitas data dan pengambilan keputusan**.
+
+### Struktur Konsep & Cara Kerja
+- **Sumber Data**:
+  - mangrove_conservation_records: Menyediakan informasi lokasi konservasi dan ID konservasi.
+  - blockchain_data_compliance: Menyediakan jenis kepatuhan data yang terhubung ke ID konservasi.
+
+- **Penggabungan Data**:
+  - Data dari kedua tabel dihubungkan berdasarkan Conservation_ID.
+
+- **Pengelompokan & Agregasi**:
+  - Data dikelompokkan berdasarkan lokasi dan jenis data compliance.
+  - Dihitung total (jumlah_data) untuk setiap kombinasi tersebut.
+
+- **Perhitungan Persentase**:
+  - Persentase dihitung berdasarkan proporsi data jenis tertentu terhadap total data di lokasi yang sama.
+
+- **Pengurutan**:
+  - Data diurutkan berdasarkan lokasi dan jumlah data tertinggi ke terendah.
+
+### Manfaat Analisis
+1. **Mengungkap Dominasi Jenis Kepatuhan**  
+   Menunjukkan jenis compliance mana yang paling sering muncul di setiap lokasi.
+
+2. **Evaluasi Keseimbangan Data**  
+   Mempermudah identifikasi lokasi dengan distribusi data yang tidak seimbang.
+
+3. **Meningkatkan Kualitas Basis Data**  
+   Menjadi dasar untuk melengkapi atau mengaudit data yang belum representatif.
+
+4. **Dasar Pengambilan Kebijakan**  
+   Membantu dalam perumusan strategi konservasi dan pelaporan berbasis bukti.
+
+
+### Interpretasi Hasil
+Contoh hasil yang mungkin ditampilkan:
+
+| Lokasi   | Jenis Data       | Jumlah Data | Persentase |
+|----------|------------------|-------------|------------|
+| Papua    | Legal            | 80          | 66.7%      |
+| Papua    | Environmental    | 40          | 33.3%      |
+| Bali     | Legal            | 50          | 50.0%      |
+| Bali     | Financial        | 30          | 30.0%      |
+| Bali     | Environmental    | 20          | 20.0%      |
+
+**Interpretasi**:
+- Di Papua, data legal mendominasi (66.7%), sedangkan data lingkungan lebih sedikit.
+- Bali memiliki distribusi yang lebih seimbang antara jenis data.
+- Lokasi dengan dominasi satu jenis data berpotensi belum memiliki dokumentasi compliance yang lengkap.
+
+### Rekomendasi Analisis
+1. **Analisis Waktu**  
+   Tambahkan dimensi waktu untuk melihat tren per tahun atau per bulan.
+
+2. **Bandingkan dengan Target Kepatuhan**  
+   Evaluasi apakah semua lokasi sudah memenuhi semua kategori compliance.
+
+3. **Identifikasi Outlier**  
+   Cari lokasi dengan proporsi data yang ekstrem untuk audit lebih lanjut.
+
+4. **Perluas dengan Data Dampak**  
+   Integrasikan dengan data hasil konservasi untuk menghubungkan compliance dan keberhasilan program.
+
+### Kesimpulan
+Query ini menyajikan analisis penting mengenai:
+- **Distribusi dan representasi** data kepatuhan konservasi berbasis blockchain.
+- **Keseimbangan** jenis compliance pada setiap lokasi.
+- Menjadi dasar untuk **pengambilan keputusan berbasis data**, meningkatkan **transparansi**, dan menunjang **efektivitas pengelolaan konservasi**.
+
+### Topic 2 : Korelasi Level Akses dengan Volume Transaksi
+    SELECT
+      bdc.Access_Level,
+      bdc.Data_Type,
+      COUNT(bt.Transaction_ID) AS jumlah_transaksi,
+      SUM(bt.Carbon_Credits_Transferred) AS total_karbon,
+      AVG(bt.Carbon_Credits_Transferred) AS rata_karbon
+    FROM
+      blockchain_data_compliance bdc
+    LEFT JOIN
+      blockchain_transactions bt ON bdc.Conservation_ID = bt.Conservation_ID
+    GROUP BY
+      bdc.Access_Level, bdc.Data_Type
+    ORDER BY
+      total_karbon DESC;
+Output File :
+<img width="449" height="82" alt="image" src="https://github.com/user-attachments/assets/7f5c7553-803f-41fd-a928-69d1c236458d" />
+
+### Tujuan Utama
+Query ini bertujuan untuk:
+- Menganalisis hubungan antara **level akses** (Access_Level) dan **jenis data kepatuhan** (Data_Type) dengan **aktivitas transaksi karbon** pada sistem blockchain.
+- Mengukur volume dan karakteristik transaksi berdasarkan dimensi kepatuhan dan aksesibilitas data.
+
+
+### Struktur Konsep & Cara Kerja
+- **Sumber Data**:
+  - blockchain_data_compliance: Menyediakan metadata tentang jenis data dan tingkat akses terkait konservasi karbon.
+  - blockchain_transactions: Menyediakan data transaksi karbon yang terjadi pada masing-masing proyek konservasi.
+
+- **Join Tabel**:
+  - Tabel blockchain_data_compliance di-*left join* dengan blockchain_transactions berdasarkan Conservation_ID.
+  - *LEFT JOIN* digunakan untuk memastikan semua data compliance tetap ditampilkan meskipun tidak memiliki transaksi karbon.
+
+- **Agregasi Data**:
+  - Jumlah transaksi dihitung dengan COUNT.
+  - Total karbon yang ditransfer dijumlahkan dengan SUM.
+  - Rata-rata karbon per transaksi dihitung dengan AVG.
+
+- **Pengelompokan Data**:
+  - Data dikelompokkan berdasarkan kombinasi Access_Level dan Data_Type.
+
+- **Pengurutan Data**:
+  - Hasil diurutkan berdasarkan total karbon tertinggi ke terendah (ORDER BY total_karbon DESC).
+
+
+### Manfaat Analisis
+1. **Menilai Dampak Transaksi Berdasarkan Akses Data**  
+   Apakah level akses tertentu (misalnya publik vs terbatas) berkaitan dengan volume karbon yang ditransaksikan?
+
+2. **Mengidentifikasi Efektivitas Jenis Data**  
+   Mengetahui jenis data compliance mana yang mendukung aktivitas transaksi karbon paling signifikan.
+
+3. **Membantu Audit dan Transparansi**  
+   Memberikan gambaran data mana yang perlu diawasi atau dioptimalkan dari segi keamanan dan efektivitas.
+
+4. **Strategi Pengelolaan Data**  
+   Mendukung pengambilan keputusan terkait pembukaan akses atau pemodelan data yang efektif.
+
+
+### Interpretasi Hasil
+Contoh interpretasi dari hasil query:
+
+| Access_Level | Data_Type     | jumlah_transaksi | total_karbon | rata_karbon |
+|--------------|---------------|------------------|--------------|-------------|
+| Publik       | Legal         | 100              | 50,000       | 500         |
+| Terbatas     | Financial     | 50               | 30,000       | 600         |
+| Internal     | Environmental | 20               | 5,000        | 250         |
+
+**Penjelasan**:
+- Data **publik** dengan jenis **Legal** memiliki jumlah dan total karbon tertinggi, menunjukkan efisiensi atau kepercayaan tinggi.
+- Data **terbatas** memiliki rata-rata karbon per transaksi tertinggi, meskipun jumlahnya lebih sedikit.
+- Data **internal** berkontribusi rendah terhadap transaksi karbon, mungkin karena keterbatasan akses atau nilai data yang rendah di pasar.
+
+### Rekomendasi Analisis
+1. **Evaluasi Level Akses**  
+   Tinjau apakah membuka akses publik terhadap jenis data tertentu berdampak pada peningkatan transaksi karbon.
+
+2. **Optimalkan Jenis Data**  
+   Fokus pada penguatan jenis data yang berkorelasi tinggi dengan aktivitas karbon, seperti data legal dan finansial.
+
+3. **Kaji Keamanan dan Privasi**  
+   Data dengan akses publik yang berdampak tinggi harus dipastikan aman dan tetap mematuhi regulasi.
+
+4. **Lanjutkan dengan Tren Waktu**  
+   Tambahkan dimensi waktu untuk melihat apakah pola ini konsisten dalam jangka panjang.
+
+### Kesimpulan
+Query ini memberikan wawasan penting mengenai:
+- Hubungan antara **aksesibilitas data** dan **efektivitas transaksi karbon**.
+- Identifikasi jenis data yang paling berkontribusi terhadap aktivitas di blockchain konservasi karbon.
+- Memberikan dasar kuat untuk **pengambilan keputusan strategis**, baik dalam hal **keterbukaan data**, **prioritas pengumpulan data**, maupun **optimalisasi dampak lingkungan melalui teknologi blockchain**.
+
+
+### Topic 3 : Pola Temporal Penerbitan Izin vs Aktivitas
+    WITH bulan_izin AS (
+      SELECT
+        DATE_TRUNC('month', rp.Approval_Date) AS bulan,
+        COUNT(*) AS jumlah_izin
+      FROM
+        regulatory_permits rp
+      WHERE
+        rp.Permit_Status = 'Approved'
+      GROUP BY
+        DATE_TRUNC('month', rp.Approval_Date)
+    ),
+    bulan_transaksi AS (
+      SELECT
+        DATE_TRUNC('month', bt.Transaction_Date) AS bulan,
+        COUNT(*) AS jumlah_transaksi,
+        SUM(bt.Carbon_Credits_Transferred) AS total_karbon
+      FROM
+        blockchain_transactions bt
+      GROUP BY
+        DATE_TRUNC('month', bt.Transaction_Date)
+    )
+    SELECT
+      i.bulan,
+      i.jumlah_izin,
+      t.jumlah_transaksi,
+      t.total_karbon
+    FROM
+      bulan_izin i
+    LEFT JOIN
+      bulan_transaksi t ON i.bulan = t.bulan
+    ORDER BY
+      i.bulan;
+Output File:
+<img width="435" height="86" alt="image" src="https://github.com/user-attachments/assets/71b9a362-c140-4245-be22-7aa87c04cb33" />
+
+### Tujuan Utama
+Query ini bertujuan untuk:
+- Menganalisis **jumlah izin regulasi yang disetujui per bulan** dan menghubungkannya dengan **aktivitas transaksi karbon** pada bulan yang sama.
+- Memberikan gambaran bulanan tentang hubungan antara persetujuan izin dan transaksi karbon dalam sistem berbasis blockchain.
+
+### Struktur Konsep & Cara Kerja
+### 1. **CTE (Common Table Expressions)**
+- **bulan_izin**:
+  - Mengambil data dari tabel regulatory_permits;
+  - Mengelompokkan berdasarkan bulan (DATE_TRUNC) dari tanggal persetujuan (Approval_Date).
+  - Menghitung jumlah izin yang disetujui per bulan.
+
+- **bulan_transaksi**:
+  - Mengambil data dari tabel blockchain_transactions.
+  - Mengelompokkan berdasarkan bulan (DATE_TRUNC) dari tanggal transaksi (Transaction_Date).
+  - Menghitung jumlah transaksi karbon dan total karbon yang ditransfer per bulan.
+
+### 2. **JOIN Data Bulanan**
+- Data dari bulan_izin digabungkan (LEFT JOIN) dengan bulan_transaksi berdasarkan kolom bulan.
+- Menggunakan LEFT JOIN agar semua bulan dengan izin tetap ditampilkan meskipun tidak ada transaksi karbon.
+
+### 3. **Output & Urutan**
+- Menampilkan kolom:
+  - bulan
+  - jumlah_izin
+  - jumlah_transaksi
+  - total_karbon
+- Hasil diurutkan berdasarkan bulan secara kronologis.
+
+
+### Manfaat Analisis
+1. **Mengukur Dampak Regulasi terhadap Aktivitas Transaksi**  
+   Menunjukkan apakah peningkatan izin regulasi memicu peningkatan transaksi karbon.
+
+2. **Monitoring Kinerja Bulanan**  
+   Memudahkan pemantauan aktivitas blockchain karbon dan implementasi izin lingkungan dari waktu ke waktu.
+
+3. **Identifikasi Tren Musiman atau Waktu Tertentu**  
+   Apakah ada bulan tertentu yang konsisten menunjukkan aktivitas tinggi atau rendah?
+
+4. **Dasar Evaluasi Kebijakan**  
+   Memberikan data historis yang dapat digunakan untuk mengevaluasi efektivitas kebijakan regulasi terhadap pasar karbon.
+
+### Interpretasi Hasil
+- **Korelasi Positif**: Pada bulan-bulan seperti Maret dan April, peningkatan jumlah izin disertai dengan peningkatan transaksi dan total karbon.
+- **Gap Aktivitas**: Pada bulan tertentu, seperti Mei, jumlah izin ada tetapi tidak ada transaksi karbon, menunjukkan potensi keterlambatan implementasi.
+- **Volatilitas**: Fluktuasi jumlah izin dan transaksi bisa menunjukkan respons terhadap kebijakan baru, musim, atau faktor eksternal lainnya.
+
+
+### Rekomendasi Analisis
+1. **Tambahkan Dimensi Wilayah atau Jenis Izin**  
+   Agar bisa melihat apakah izin di daerah tertentu lebih berdampak pada transaksi karbon.
+
+2. **Analisis Time Lag**  
+   Tinjau apakah ada keterlambatan antara izin diterbitkan dan transaksi karbon dilakukan.
+
+3. **Tingkatkan Konektivitas Data**  
+   Sinkronkan data izin dan transaksi untuk melacak alur dari izin → proyek → transaksi.
+
+4. **Integrasi dengan Target Nasional/Internasional**  
+   Bandingkan output dengan target emisi atau kredit karbon untuk menilai pencapaian.
+
+### Kesimpulan
+Query ini menyajikan analisis penting tentang:
+- **Hubungan antara izin regulasi dan transaksi karbon per bulan**.
+- Memberikan indikasi apakah **aktivitas pasar karbon mengikuti tren persetujuan izin**.
+- Menjadi dasar untuk **pengambilan keputusan kebijakan lingkungan**, alokasi sumber daya, dan pemantauan efektivitas sistem perdagangan karbon berbasis blockchain.
+Analisis semacam ini sangat berguna untuk **lembaga pemerintah, lembaga lingkungan, dan pelaku pasar karbon** yang ingin memahami keterkaitan antara kebijakan dan implementasi di lapangan.
+
+# Analisis Visualisasi Jaringan Blockchain Konservasi Mangrove
+    import pandas as pd
+    from sqlalchemy import create_engine
+    from pyvis.network import Network
+    import networkx as nx
+    from IPython.display import display, IFrame
+    from datetime import datetime
+    
+    # Koneksi database
+    conn_string = "postgresql://postgres:postgresql@localhost:5432/postgres"
+    db = create_engine(conn_string)
+    
+    # Query data node
+    query_nodes = """
+    SELECT c.Conservation_ID, c.Location, bdc.Data_Type, bdc.Access_Level,
+    COUNT(bt.Transaction_ID) AS transaction_count
+    FROM mangrove_conservation_records c
+    JOIN blockchain_data_compliance bdc ON c.Conservation_ID = bdc.Conservation_ID
+    LEFT JOIN blockchain_transactions bt ON c.Conservation_ID = bt.Conservation_ID
+    GROUP BY c.Conservation_ID, c.Location, bdc.Data_Type, bdc.Access_Level
+    """
+    nodes_df = pd.read_sql(query_nodes, db)
+    
+    # Query data edge
+    query_edges = """
+    WITH transactions AS (
+    SELECT Conservation_ID, Block_Hash, COUNT(*) AS weight
+    FROM blockchain_transactions
+    GROUP BY Conservation_ID, Block_Hash
+    )
+    SELECT t1.Conservation_ID AS source, t2.Conservation_ID AS target, t1.weight
+    FROM transactions t1
+    JOIN transactions t2 ON t1.Block_Hash = t2.Block_Hash
+    WHERE t1.Conservation_ID != t2.Conservation_ID
+    """
+    edges_df = pd.read_sql(query_edges, db)
+    
+    # Simpan ke file CSV
+    nodes_df.to_csv('network_nodes.csv', index=False)
+    edges_df.to_csv('network_edges.csv', index=False)
+    
+    # Inisialisasi jaringan
+    net = Network(height="750px", width="100%", bgcolor="#222222", font_color="white", notebook=True)
+    
+    # Konfigurasi global physics
+    net.barnes_hut(gravity=-80000, central_gravity=0.3, spring_length=250, spring_strength=0.001, damping=0.09, overlap=0)
+    
+    # Tambahkan node
+    for idx, row in nodes_df.iterrows():
+        node_size = 10 + int(row['transaction_count']) * 2
+        node_title = f"ID: {row['conservation_id']}<br>Lokasi: {row['location']}<br>Tipe: {row['data_type']}<br>Akses: {row['access_level']}<br>Transaksi: {row['transaction_count']}"
+    
+        # Warna berdasarkan tipe data
+        if row['data_type'] == 'Geographic':
+            color = '#4CAF50'  # Hijau
+        elif row['data_type'] == 'Personal':
+            color = '#2196F3'  # Biru
+        else:
+            color = '#FF5722'  # Orange
+    
+        # Bentuk berdasarkan level akses
+        if row['access_level'] == 'Public':
+            shape = 'dot'
+        elif row['access_level'] == 'Restricted':
+            shape = 'diamond'
+        else:
+            shape = 'star'
+    
+        net.add_node(
+            n_id=row['conservation_id'],
+            label=row['conservation_id'],
+            title=node_title,
+            size=node_size,
+            color=color,
+            shape=shape,
+            borderWidth=2
+        )
+    
+    # Tambahkan edge asli (kosong di sini tapi tetap disiapkan)
+    for idx, row in edges_df.iterrows():
+        net.add_edge(
+            row['source'],
+            row['target'],
+            value=row['weight'],
+            title=f"{row['weight']} transaksi",
+            color='#757575'
+        )
+    
+    # Tambahkan edge korelasi berdasarkan tipe data
+    for i in range(len(nodes_df)):
+        for j in range(i + 1, len(nodes_df)):
+            node_i = nodes_df.iloc[i]
+            node_j = nodes_df.iloc[j]
+    
+            if node_i['data_type'] == node_j['data_type']:
+                net.add_edge(
+                    node_i['conservation_id'],
+                    node_j['conservation_id'],
+                    value=1,
+                    title=f"Korelasi Tipe: {node_i['data_type']}",
+                    color='#AAAAAA',
+                    dashes=True,
+                    physics=False
+                )
+    
+    # Opsi visualisasi
+    net.set_options("""
+    {
+      "nodes": {
+        "font": {
+          "size": 12,
+          "face": "arial"
+        }
+      },
+      "edges": {
+        "smooth": {
+          "type": "continuous"
+        }
+      },
+      "physics": {
+        "forceAtlas2Based": {
+          "gravitationalConstant": -50,
+          "centralGravity": 0.01,
+          "springLength": 100,
+          "springConstant": 0.08
+        },
+        "minVelocity": 0.75,
+        "solver": "forceAtlas2Based"
+      }
+    }
+    """)
+    
+    # Simpan dan tampilkan
+    net.show("blockchain_network.html")
+
+Output Analisa:
+<img width="1501" height="689" alt="image" src="https://github.com/user-attachments/assets/78b4f19c-c18f-45db-9550-cd4db58d1df7" />
+
+## Tujuan Analisis
+Analisis ini bertujuan untuk:
+- Memetakan keterhubungan proyek konservasi mangrove berbasis blockchain.
+- Menilai hubungan transaksi antar proyek berdasarkan blok blockchain (Block_Hash).
+- Mengidentifikasi korelasi antar proyek berdasarkan jenis data dan tingkat akses.
+- Menemukan pola klasterisasi data dan hubungan antar tipe node (data pribadi, geografis, transaksi).
+
+## Konsep dan Cara Kerja
+### 1. Pengambilan Data
+- **Node (Proyek Konservasi):** Diambil dari dua tabel:
+  - mangrove_conservation_records
+  - blockchain_data_compliance
+- **Atribut Node:**
+  - conservation_id
+  - location
+  - data_type: Geographic, Personal, Transaction
+  - access_level: Public, Restricted, Auditor
+  - transaction_count
+
+- **Edge (Transaksi):**
+  - Dihubungkan jika dua proyek memiliki transaksi dengan block_hash yang sama.
+  - Dihitung jumlah keterhubungan (bobot transaksi).
+
+### 2. Visualisasi dengan Pyvis
+- **Warna Node:**
+  - Hijau → Geographic
+  - Biru → Personal
+  - Oranye → Transaction
+- **Bentuk Node:**
+  - Titik → Public
+  - Diamond → Restricted
+  - Bintang → Auditor
+- **Ukuran Node:** Berdasarkan jumlah transaksi.
+- **Edge:**
+  - Abu tua → Transaksi riil
+  - Abu terang putus-putus → Korelasi berdasarkan data_type
+
+### 3. Layout Physics
+- Menggunakan forceAtlas2Based untuk menciptakan layout natural yang memudahkan analisa klaster.
+
+
+### Hasil Analisis
+- Jaringan membentuk **dua klaster besar**:
+  1. Proyek-proyek dengan data personal (biru)
+  2. Proyek dengan data geografis dan transaksi (hijau dan oranye)
+
+- Node **Auditor (bintang)** menjadi penghubung antara berbagai klaster.
+
+- Beberapa node besar menunjukkan proyek dengan tingkat aktivitas blockchain yang tinggi.
+
+
+### Interpretasi Data
+- Node-node yang saling berbagi blok menunjukkan kemungkinan **kolaborasi data atau transaksi lintas proyek**.
+- Proyek dengan data tipe serupa cenderung berada dalam klaster yang sama.
+- Node auditor memiliki potensi sebagai penghubung utama dalam tata kelola data.
+
+
+### Rekomendasi
+1. **Audit pada proyek dengan keterhubungan tinggi** → evaluasi untuk potensi overload atau integrasi ganda.
+2. **Tingkatkan jumlah node auditor** untuk memperkuat governance dan integritas data.
+3. **Standardisasi data antar proyek** yang saat ini belum saling terhubung secara langsung.
+4. **Gunakan visualisasi ini sebagai alat bantu regulasi dan audit blockchain**.
+
+
+### Manfaat Analisa
+- Menyediakan gambaran makro atas jaringan proyek konservasi berbasis blockchain.
+- Membantu tim teknis dan regulator dalam:
+  - Menemukan anomali atau duplikasi
+  - Menyusun strategi interoperabilitas
+  - Menyempurnakan struktur governance dan distribusi data
+
+### Kesimpulan
+- Visualisasi ini menunjukkan bahwa keterhubungan proyek konservasi tidak hanya didasarkan pada transaksi, tapi juga korelasi tipe data dan peran auditor.
+- Node auditor merupakan simpul strategis yang menjembatani berbagai jenis proyek.
+- Klaster yang terbentuk memberikan gambaran tentang pola komunikasi dan integrasi sistem blockchain.
+
+### Kesimpulan Analisa
+Pendekatan visualisasi jaringan ini efektif dalam mengungkap pola distribusi dan hubungan fungsional antar proyek konservasi mangrove berbasis blockchain. Pemahaman atas konektivitas ini penting untuk meningkatkan transparansi, efisiensi, dan keberlanjutan pengelolaan ekosistem mangrove digital.
+
+
+
+
 
