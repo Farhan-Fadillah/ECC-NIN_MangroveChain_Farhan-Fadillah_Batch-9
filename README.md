@@ -1,3 +1,14 @@
+# KELOMPOK 2:
+- Farhan Fadillah (9.008.DB2025)
+- Jihan Afifah M. (9.052.DB2025)
+- Agus Iskandar Darmawan (09.009.DB2025)
+- Maksum (9.045.DB2025)
+- Achmad Hidayat (9.011.DB2025)
+- Pandu Kent Elian (9.059.DB2025)
+- Bavari Muhammad Waldan (9.029.DB2025)
+- Septian Bagus Pambudi (9.057.DB2025)
+- Ihsan Ahsanu Amala (9.044.DB2025)
+
 # BAB I. PENDAHULUAN
 ## 1.1 Latar Belakang Masalah
 
