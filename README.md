@@ -220,10 +220,94 @@ Mengurutkan hasil dari status izin dengan kerapatan pohon tertinggi ke terendah.
     plt.show()
 <img width="972" height="598" alt="image" src="https://github.com/user-attachments/assets/23ed79dd-9476-4f03-8f2e-c817af675ad1" />
 
+## Apakah status persetujuan izin berkorelasi dengan peningkatan biodiversitas yang terukur (kualitas air, kerapatan pohon)?
+
+    # Buat kolom dummy untuk masing-masing permit status
+    df['permit_pending'] = df['permit_status_numeric'].apply(lambda x: 1 if x == 0 else 0)
+    df['permit_approved'] = df['permit_status_numeric'].apply(lambda x: 1 if x == 1 else 0)
+    
+    # Ambil kolom yang diperlukan
+    x_col = ['water_quality_numeric', 'tree_density']
+    y_cols = ['permit_approved', 'permit_pending']
+    
+    # Hitung korelasi
+    correlations = {y: df[x_col].corrwith(df[y]) for y in y_cols}
+    
+    # Ubah ke DataFrame
+    corr_df = pd.DataFrame(correlations).T
+    
+    # Plot heatmap
+    plt.figure(figsize=(7, 5))
+    sns.heatmap(corr_df, annot=True, cmap='coolwarm', fmt='.2f', cbar_kws={'label':'Koefisien Korelasi'})
+    plt.title('Korelasi Status Izin terhadap Kualitas Air & Kerapatan Pohon')
+    plt.xlabel('Indikator Biodiversitas')
+    plt.ylabel('Status Izin')
+    plt.show()
+<img width="624" height="477" alt="image" src="https://github.com/user-attachments/assets/3457d509-f360-4deb-8503-3b6d7ebc0291" />
+
+<font size="3">Analisis menunjukkan adanya potensi pertukaran (trade-off) lingkungan dalam proses perizinan. Ketika izin disetujui, kualitas air cenderung membaik namun kerapatan pohon menurun. Sebaliknya, saat izin tertunda, kerapatan pohon meningkat meskipun kualitas air menurun. Pola ini mengisyaratkan bahwa kebijakan mungkin terfokus pada perbaikan satu aspek (misalnya air) dan tanpa disadari mengabaikan aspek lain (misalnya pohon). Meskipun demikian, karena semua korelasi ini sangat lemah, status izin kemungkinan bukanlah faktor utama penyebab perubahan tersebut. Faktor-faktor lain seperti kondisi lingkungan awal, jenis proyek, atau iklim, diperkirakan memiliki pengaruh yang jauh lebih besar.</font>
+
+## Bagaimana pengaturan kepemilikan lahan yang berbeda (negara, swasta, masyarakat) mempengaruhi keanekaragaman spesies?
+
+    # Buat kolom dummy untuk masing-masing land type
+    df['state_land'] = df['land_type_numeric'].apply(lambda x: 1 if x == 0 else 0)
+    df['private_land'] = df['land_type_numeric'].apply(lambda x: 1 if x == 1 else 0)
+    df['community_land'] = df['land_type_numeric'].apply(lambda x: 1 if x == 2 else 0)
+    
+    # Ambil kolom yang diperlukan
+    x_col = 'species_count'
+    y_cols = ['state_land', 'private_land', 'community_land']
+    
+    # Hitung korelasi secara manual untuk tiap Y terhadap X
+    correlations = {y: df[x_col].corr(df[y]) for y in y_cols}
+    
+    # Ubah jadi DataFrame supaya bisa pakai heatmap
+    corr_df = pd.DataFrame.from_dict(correlations, orient='index', columns=[x_col])
+    
+    # Plot heatmap
+    plt.figure(figsize=(6, 4))
+    sns.heatmap(corr_df, annot=True, cmap='coolwarm', fmt='.2f', cbar_kws={'label':'Koefisien Korelasi'})
+    plt.title('Korelasi Jenis lahan terhadap keanekaragaman spesies')
+    plt.xlabel('Jumlah Spesies')
+    plt.ylabel('Jenis Lahan')
+    plt.show()
+<img width="551" height="401" alt="image" src="https://github.com/user-attachments/assets/7c4c7a26-fc6f-4560-94b3-51fc81c3df39" />
+
+<font size="3">Berdasarkan analisis, lahan yang dikelola oleh masyarakat menunjukkan korelasi positif dengan keanekaragaman spesies. Hal ini mengindikasikan bahwa model pengelolaan berbasis komunitas mungkin lebih efektif dalam menjaga ekosistem. Kemungkinan besar, ini terjadi berkat pengetahuan lokal yang mendalam, praktik berkelanjutan, dan insentif langsung bagi masyarakat untuk menjaga lingkungan demi keberlangsungan hidup mereka.
+
+Di sisi lain, lahan yang dikelola oleh negara dan swasta menunjukkan korelasi negatif, yang bisa jadi berhubungan dengan praktik pemanfaatan sumber daya yang lebih intensif (seperti monokultur) dan terfokus pada kepentingan komersial, misalnya pertambangan atau perhutanan komersial. Hal ini berpotensi mengurangi keragaman spesies.</font>
+
+## Apakah proyek dengan batas lahan yang terdefinisi secara hukum mencapai hasil ekologis yang lebih baik?
+    # Ambil kolom yang diperlukan
+    x_col = 'defined_legal_boundary'
+    y_cols = ['species_count', 'tree_density', 'water_quality_score']
+    
+    # Hitung korelasi secara manual
+    correlations = {y: df[x_col].corr(df[y]) for y in y_cols}
+    
+    # Buat DataFrame
+    corr_df = pd.DataFrame.from_dict(correlations, orient='index', columns=['defined_legal_boundary'])
+    
+    # Visualisasi heatmap
+    plt.figure(figsize=(6, 4))
+    sns.heatmap(corr_df, annot=True, cmap='coolwarm', fmt=".2f", cbar_kws={'label': 'Koefisien Korelasi'})
+    plt.title('Korelasi Batas Lahan Legal dengan Indikator Ekologis')
+    plt.xlabel('Batas Lahan Legal')
+    plt.ylabel('Indikator Ekologis')
+    plt.tight_layout()
+    plt.show()
+
+<img width="600" height="388" alt="image" src="https://github.com/user-attachments/assets/87482ab7-0623-442f-a172-c33e8c5a44dd" />
+
+<font size="3">Hasil ini menunjukkan bahwa penetapan batas lahan secara hukum menghasilkan kondisi yang tidak seimbang. Kualitas air bisa membaik, namun di sisi lain, kerapatan pohon menurun. Ini mengisyaratkan bahwa penetapan batas lahan saja tidak cukup untuk melindungi semua aspek lingkungan.
+
+Sama seperti membuat pagar di sekeliling kebun, pagar itu (batas legal) tidak akan membuat tanaman tumbuh subur. Butuh tindakan nyata seperti menyiram, memberi pupuk, dan merawatnya. Demikian juga, untuk melindungi pohon dan spesies, perlu ada upaya nyata di dalam batas lahan tersebut, bukan hanya mengandalkan penetapan batasnya saja.
+
+Faktor-faktor ini menjadi sangat penting karena semua nilai korelasi dalam grafik ini sangat lemah, yang menandakan bahwa batas lahan legal bukanlah faktor utama yang menentukan hasil ekologis.</font>
+
 # Analisis Korelasi Faktor Regulasi terhadap Metrik Biodiversitas
 
-Script ini digunakan untuk menganalisis **hubungan antara kebijakan/regulasi konservasi** (seperti status izin dan jenis kepemilikan lahan) dengan **indikator biodiversitas** (jumlah spesies, kerapatan pohon, dan kualitas air) menggunakan data dari database PostgreSQL. Hasil analisis divisualisasikan dalam bentuk **heatmap korelasi** agar lebih mudah dipahami.
-
+Script ini digunakan untuk menganalisis **hubungan antara kebijakan/regulasi konservasi** (seperti status izin dan jenis kepemilikan lahan) dengan **indikator biodiversitas** (jumlah spesies, kerapatan pohon, dan kualitas air) menggunakan data dari database PostgreSQL dan CSV. Hasil analisis divisualisasikan dalam bentuk **heatmap korelasi** agar lebih mudah dipahami.
 
 ## Konsep Cara Kerja Script
 
