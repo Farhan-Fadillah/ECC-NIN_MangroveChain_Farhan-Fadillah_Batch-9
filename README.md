@@ -93,7 +93,7 @@ Tim konservasi menemukan variasi signifikan dalam hasil monitoring biodiversitas
 
 ## Pembahasan Analisa dengan Query SQL
 
-### Topic : Apakah status persetujuan izin berkorelasi dengan peningkatan biodiversitas yang terukur (kualitas air, kerapatan pohon)?
+### Topic 1 : Apakah status persetujuan izin berkorelasi dengan peningkatan biodiversitas yang terukur (kualitas air, kerapatan pohon)?
 
     SELECT
       rp.Permit_Status AS "Status Izin",
@@ -158,6 +158,124 @@ Mengurutkan hasil dari status izin dengan kerapatan pohon tertinggi ke terendah.
 - Gunakan hasil ini untuk menetapkan kriteria izin yang lebih ketat, misalnya hanya menyetujui proyek yang memiliki rencana konservasi jangka panjang.
 - Lakukan pemantauan berkala pada proyek dengan skor kualitas air rendah untuk mencegah kerusakan lebih lanjut.
 - Buat laporan visual tambahan, misalnya grafik batang atau heatmap, untuk mempermudah pemahaman bagi pihak non-teknis atau pemangku kebijakan.
+
+## Topic 2 : Bagaimana pengaturan kepemilikan lahan yang berbeda (negara, swasta, masyarakat) mempengaruhi keanekaragaman spesies?
+    SELECT 
+    CASE 
+        WHEN ltr.land_type = 'State Land' THEN 0
+        WHEN ltr.land_type = 'Private Land' THEN 1
+        WHEN ltr.land_type = 'Community Land' THEN 2
+    END AS land_type_numeric,
+    bm.species_count
+    FROM land_tenure_records ltr
+    JOIN biodiversity_monitoring bm ON ltr.conservation_id = bm.conservation_id;
+Output File:
+<img width="230" height="65" alt="image" src="https://github.com/user-attachments/assets/a7b3b442-21ad-466c-b219-68c64f466f5a" />
+
+## Analisis Query SQL: Konversi Jenis Lahan dan Jumlah Spesies
+## Tujuan Query
+Query ini bertujuan untuk:
+- Mengonversi **jenis kepemilikan lahan** dari bentuk teks (`State Land`, `Private Land`, `Community Land`) menjadi bentuk **angka** (0, 1, 2).
+- Mengambil data **jumlah spesies** (`species_count`) dari hasil pemantauan keanekaragaman hayati.
+- Menggabungkan data antara tabel kepemilikan lahan dan tabel monitoring keanekaragaman berdasarkan `conservation_id`.
+
+##  Konsep Cara Kerja
+1. **Konversi Kategorikal ke Numerik**
+   - `'State Land'` → `0`
+   - `'Private Land'` → `1`
+   - `'Community Land'` → `2`
+
+2. **Pengambilan Data Keanekaragaman**
+   - Mengambil `species_count` dari tabel monitoring.
+
+3. **Proses Join**
+   - Data digabungkan dengan **INNER JOIN** menggunakan kolom `conservation_id`.
+   - Hanya data yang memiliki kecocokan di kedua tabel yang akan diambil.
+
+## Hasil Analisa
+Query menghasilkan dua kolom utama:
+- `land_type_numeric`: Jenis lahan dalam bentuk angka.
+- `species_count`: Jumlah spesies yang tercatat.
+
+| land_type_numeric | species_count |
+|-------------------|---------------|
+| 0                 | 120           |
+| 1                 | 85            |
+| 2                 | 140           |
+
+## Kegunaan Praktis
+- **Data Science & Machine Learning**: Angka lebih mudah digunakan dalam model prediktif.
+- **Analisis Statistik**: Menilai pengaruh jenis lahan terhadap jumlah spesies.
+- **Visualisasi Data**: Dapat divisualisasikan dalam grafik (bar chart, scatter plot, dll).
+
+## Topic 3 : Apakah proyek dengan batas lahan yang terdefinisi secara hukum mencapai hasil ekologis yang lebih baik?
+    SELECT 
+        ltr.conservation_id,
+        CASE 
+            WHEN ltr.legal_document LIKE 'HGU%' AND ltr.boundary_defined = 'Yes' THEN 1
+            ELSE 0
+        END AS defined_legal_boundary,
+        bm.Species_Count,
+        bm.Tree_Density,
+        CASE 
+            WHEN bm.Water_Quality = 'Good' THEN 2
+            WHEN bm.Water_Quality = 'Moderate' THEN 1
+            WHEN bm.Water_Quality = 'Poor' THEN 0
+            ELSE NULL
+        END AS Water_Quality_Score
+    FROM land_tenure_records ltr
+    JOIN biodiversity_monitoring bm
+    ON ltr.conservation_id = bm.conservation_id;
+  Output File:
+  <img width="589" height="86" alt="image" src="https://github.com/user-attachments/assets/bea5ea58-40d3-4627-9020-f718da1b8d07" />
+
+## Analisis Query SQL: Legalitas Batas Lahan, Keanekaragaman Hayati, dan Kualitas Air
+## Tujuan Query
+Query ini digunakan untuk:
+- Mengidentifikasi apakah sebuah area konservasi memiliki **batas hukum yang jelas** berdasarkan dokumen legal dan status batas wilayah.
+- Mengambil data ekologis dari monitoring keanekaragaman hayati, seperti:
+  - **Jumlah spesies** (`Species_Count`)
+  - **Kepadatan pohon** (`Tree_Density`)
+  - **Kualitas air** (`Water_Quality`)
+- Mengubah informasi kategori menjadi bentuk **angka/nilai skor** yang lebih mudah dianalisis secara kuantitatif.
+
+## Konsep Cara Kerja
+1. **Identifikasi Legalitas dan Kepastian Batas Lahan**
+   - Jika `legal_document` diawali dengan `'HGU'` **dan** `boundary_defined = 'Yes'`, maka lahan dianggap memiliki **batas legal yang jelas** → diberi nilai `1`.
+   - Jika tidak memenuhi kedua syarat tersebut → diberi nilai `0`.
+
+2. **Pengambilan Data Ekologis**
+   - Mengambil data dari tabel `biodiversity_monitoring`:
+     - `Species_Count`: Jumlah spesies yang ditemukan.
+     - `Tree_Density`: Kepadatan pohon di area tersebut.
+     - `Water_Quality`: Kualitas air dikonversi menjadi skor numerik.
+
+3. **Konversi Kualitas Air Menjadi Skor**
+   - `'Good'` → `2`
+   - `'Moderate'` → `1`
+   - `'Poor'` → `0`
+   - Selain ketiganya → `NULL` (tidak diketahui)
+
+4. **JOIN Tabel**
+   - Data digabungkan antara `land_tenure_records` (`ltr`) dan `biodiversity_monitoring` (`bm`) melalui kolom `conservation_id`.
+
+## Hasil Analisa
+Output query ini akan menghasilkan tabel seperti berikut:
+| conservation_id | defined_legal_boundary | Species_Count | Tree_Density | Water_Quality_Score |
+|------------------|--------------------------|----------------|---------------|----------------------|
+| C001             | 1                        | 150            | 300           | 2                    |
+| C002             | 0                        | 120            | 250           | 1                    |
+| C003             | 0                        | 95             | 180           | 0                    |
+| ...              | ...                      | ...            | ...           | ...                  |
+
+Keterangan:
+- `defined_legal_boundary`: Apakah batas hukum lahan sudah jelas.
+- `Water_Quality_Score`: Kualitas air dalam bentuk angka untuk kemudahan analisis.
+
+## Kegunaan Praktis
+- **Kebijakan & Tata Kelola Lahan:** Dapat digunakan untuk menilai apakah legalitas dan kejelasan batas lahan berkaitan dengan kondisi lingkungan (biodiversitas & kualitas air).
+- **Analisis Lingkungan:** Skor numerik memudahkan perhitungan statistik atau visualisasi.
+- **Pendukung Keputusan Konservasi:** Memberikan insight tentang hubungan antara kepastian hukum lahan dan kualitas ekosistem.
 
 ## Heatmap Matriks Korelasi Faktor Regulasi vs Metrik Biodiversitas
     import pandas as pd
